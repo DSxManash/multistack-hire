@@ -8,8 +8,12 @@ services:
     volumes:
       - ./client:/app
       - /app/node_modules
-    environment:
-      - WATCHPACK_POLLING=true
+    env_file:
+      - ./client/.env
+    networks:
+      - app-network
+    depends_on:
+      - backend
 
   backend:
     build:
@@ -19,8 +23,10 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/dbname
+    env_file:
+      - ./backend/.env
+    networks:
+      - app-network
     depends_on:
       - db
 
@@ -34,6 +40,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
