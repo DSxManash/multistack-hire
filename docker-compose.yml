@@ -10,6 +10,8 @@ services:
       - /app/node_modules
     env_file:
       - ./client/.env
+    # Re-install when package.json changes (node_modules is a separate Docker volume).
+    command: sh -c "npm install && npm run dev -- --host"
     networks:
       - app-network
     depends_on:
