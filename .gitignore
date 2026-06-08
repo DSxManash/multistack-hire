@@ -15,7 +15,8 @@ client/.env.*.local
 
 
 # Backend ignore rules
-backend/__pycache__/
+backend/**/__pycache__/
+backend/*.py[cod]
 backend/*.pyc
 backend/*.pyo
 backend/*.pyd
@@ -23,9 +24,12 @@ backend/.pytest_cache/
 backend/.coverage
 backend/htmlcov/
 backend/.env
+backend/.env.local
 backend/venv/
-backend/
-.env
+
+# Keep example env files tracked
+!client/.env.example
+!backend/.env.example
 
 
 
