@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, ranking
 
+
+# Import models so Alembic can detect them for migrations
+from app.models import user
 app = FastAPI(title="Multistack Candidate Ranking API", version="1.0.0")
 
-# CORS middleware for Frontend configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # will Adjust in production
