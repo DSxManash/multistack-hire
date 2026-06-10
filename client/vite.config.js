@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -10,13 +11,22 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    host: '0.0.0.0',   // needed inside Docker to accept external connections
+    port: 5173,
     watch: {
-      usePolling: true, // Needed for Docker volumes to trigger hot-reload consistently
+      usePolling: true, // Docker volume hot-reload
     },
     hmr: {
       host: 'localhost',
     },
     proxy: {
+      // ALL requests starting with /api
+      '/api': {
+        target: proxyTarget,
+        changeOrigin: true,
+      
+      },
+      // for health checks, we also proxy /health to the backend
       '/health': {
         target: proxyTarget,
         changeOrigin: true,
