@@ -19,7 +19,7 @@ export const getCurrentUser = async () => {
   return response.data
 }
 
-export const logoutUser = () => {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('user')
+export const logoutUser = async () => {
+  const response = await axiosInstance.post('/auth/logout')
+  return response.data
 }

@@ -1,13 +1,13 @@
-
 from pydantic import BaseModel, EmailStr, field_validator
 from app.models.user import UserRole
 
-# ── Request Schemas for Authentication
+# ── Request Schemas ───────────────────────────────────────────────
+
 class RegisterRequest(BaseModel):
     full_name: str
-    email: EmailStr        
+    email: EmailStr
     password: str
-    role: UserRole = UserRole.candidate  # optional, defaults to candidate
+    role: UserRole = UserRole.candidate
 
     @field_validator("password")
     @classmethod
@@ -29,7 +29,8 @@ class LoginRequest(BaseModel):
     password: str
 
 
-# ── Response Schemas for Authentication
+# ── Response Schemas ──────────────────────────────────────────────
+
 class UserResponse(BaseModel):
     id: str
     full_name: str
@@ -37,11 +38,15 @@ class UserResponse(BaseModel):
     role: UserRole
     is_active: bool
 
-    # This tells Pydantic to read from SQLAlchemy model attributes
     model_config = {"from_attributes": True}
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    user: UserResponse  # return user info alongside the token
+    user: UserResponse
+
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

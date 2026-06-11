@@ -13,7 +13,7 @@ from app.core.config import settings
 # Import Base so Alembic can see all your models
 # When you add new models later, import them here too
 from app.core.database import Base
-from app.models import user  # noqa: F401 — registers User model with Base
+from app.models import user, refresh_token 
 
 # Alembic Config object — reads alembic.ini
 config = context.config

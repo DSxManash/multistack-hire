@@ -1,16 +1,16 @@
-from passlib.context import CryptContext
 
-# CryptContext manages which hashing algorithm to use and how to verify passwords.
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 def hash_password(plain_password: str) -> str:
-    """Turn a plain password into a bcrypt hash."""
-    return pwd_context.hash(plain_password)
+    """Hash a plain password using bcrypt."""
+    password_bytes = plain_password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Check if a plain password matches a stored hash.
-    Returns True if match, False otherwise.
-    Never compares raw strings — always use this function.
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a plain password against a stored bcrypt hash."""
+    return bcrypt.checkpw(
+        plain_password.encode('utf-8'),
+        hashed_password.encode('utf-8')
+    )
