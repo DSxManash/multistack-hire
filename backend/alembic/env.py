@@ -14,6 +14,7 @@ from app.core.config import settings
 # When you add new models later, import them here too
 from app.core.database import Base
 from app.models import user, refresh_token 
+from app.models import job as job_model
 
 # Alembic Config object — reads alembic.ini
 config = context.config
