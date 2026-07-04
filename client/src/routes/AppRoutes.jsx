@@ -33,6 +33,8 @@ import ResumeUpload from '../pages/candidate/ResumeUpload'
 import Ranking from '../pages/candidate/Ranking'
 import Settings from '../pages/candidate/Settings'
 
+import RecruiterJobs from '../pages/recruiter/Jobs'
+
 function getRoleDashboard(role) {
   const dashboards = {
     admin: '/admin/dashboard',
@@ -83,10 +85,12 @@ export default function AppRoutes() {
         <Route element={<RoleRoute allowedRoles={['recruiter']} />}>
           <Route element={<RecruiterLayout />}>
             <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+            <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
             <Route path="/recruiter/search" element={<CandidateSearch />} />
             <Route path="/recruiter/candidates/:id" element={<CandidateDetails />} />
             <Route path="/recruiter/shortlist" element={<Shortlist />} />
             <Route path="/recruiter/analytics" element={<Analytics />} />
+            
           </Route>
         </Route>
 

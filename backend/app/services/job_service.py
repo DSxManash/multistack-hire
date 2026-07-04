@@ -1,9 +1,8 @@
-
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.job_repo import JobRepository, ApplicationRepository
 from app.schemas.job import JobCreate, JobResponse, JobListResponse, ApplicationResponse
-from app.models.job import ApplicationStatus
+from app.models.job import Application, ApplicationStatus
 
 
 class JobService:
@@ -12,7 +11,7 @@ class JobService:
         self.job_repo = JobRepository(db)
         self.app_repo = ApplicationRepository(db)
 
-    # Recruiter actions 
+    # ── Recruiter actions ─────────────────────────────────────────
 
     async def create_job(self, recruiter_id: str, data: JobCreate) -> JobResponse:
         job = await self.job_repo.create_job(
@@ -39,7 +38,7 @@ class JobService:
             raise HTTPException(status_code=403, detail="Not your job")
         await self.job_repo.deactivate(job_id)
 
-    #  Candidate actions 
+    # ── Candidate actions ─────────────────────────────────────────
 
     async def browse_jobs(self) -> list[JobListResponse]:
         jobs = await self.job_repo.get_all_active()
@@ -48,14 +47,12 @@ class JobService:
     async def apply_to_job(
         self, candidate_id: str, job_id: str
     ) -> ApplicationResponse:
-        # Check job exists and is active
         job = await self.job_repo.get_by_id(job_id)
         if not job or not job.is_active:
             raise HTTPException(
                 status_code=404,
                 detail="Job not found or no longer active"
             )
-        # Check not already applied
         if await self.app_repo.already_applied(candidate_id, job_id):
             raise HTTPException(
                 status_code=409,
@@ -68,18 +65,17 @@ class JobService:
         apps = await self.app_repo.get_candidate_applications(candidate_id)
         return [ApplicationResponse.model_validate(a) for a in apps]
 
-    # Recruiter reviewing applications 
+    # ── Recruiter reviewing applications ──────────────────────────
 
     async def get_job_applications(
         self, recruiter_id: str, job_id: str
-    ) -> list[ApplicationResponse]:
+    ) -> list[Application]:
         job = await self.job_repo.get_by_id(job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
         if job.recruiter_id != recruiter_id:
             raise HTTPException(status_code=403, detail="Not your job")
-        apps = await self.app_repo.get_job_applications(job_id)
-        return [ApplicationResponse.model_validate(a) for a in apps]
+        return await self.app_repo.get_job_applications(job_id)
 
     async def update_application_status(
         self, recruiter_id: str, application_id: str, new_status: ApplicationStatus

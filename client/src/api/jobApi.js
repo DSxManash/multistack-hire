@@ -1,9 +1,7 @@
 
-
 import axiosInstance from './axiosInstance'
 
 //  Candidate 
-
 
 // Browse all active jobs
 export const browseJobs = async () => {
@@ -55,5 +53,19 @@ export const updateApplicationStatus = async (applicationId, newStatus) => {
     null,
     { params: { new_status: newStatus } }
   )
+  return response.data
+}
+
+// ── Recruiter — Candidates ────────────────────────────────────────
+
+export const searchCandidates = async (search = '') => {
+  const response = await axiosInstance.get('/users/candidates', {
+    params: search ? { search } : {},
+  })
+  return response.data
+}
+
+export const getCandidateById = async (userId) => {
+  const response = await axiosInstance.get(`/users/candidates/${userId}`)
   return response.data
 }
