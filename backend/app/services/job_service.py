@@ -38,7 +38,7 @@ class JobService:
             raise HTTPException(status_code=403, detail="Not your job")
         await self.job_repo.deactivate(job_id)
 
-    # ── Candidate actions ─────────────────────────────────────────
+    # ── Candidate actions ─────────────────
 
     async def browse_jobs(self) -> list[JobListResponse]:
         jobs = await self.job_repo.get_all_active()
@@ -84,3 +84,8 @@ class JobService:
         if not app:
             raise HTTPException(status_code=404, detail="Application not found")
         return ApplicationResponse.model_validate(app)
+    
+
+    async def get_shortlisted(self, recruiter_id: str) -> list[Application]:
+    # All shortlisted candidates across all recruiter's jobs.
+        return await self.app_repo.get_shortlisted_by_recruiter(recruiter_id)

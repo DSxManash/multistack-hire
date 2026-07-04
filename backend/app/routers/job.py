@@ -6,6 +6,8 @@ from app.models.user import User, UserRole
 from app.models.job import ApplicationStatus
 from app.schemas.job import ApplicationWithCandidate, JobCreate, JobResponse, JobListResponse, ApplicationResponse
 from app.services.job_service import JobService
+from app.schemas.job import ShortlistedApplication
+
 
 router = APIRouter() 
 
@@ -127,3 +129,13 @@ async def close_job(
     """Recruiter closes/deactivates a job."""
     service = JobService(db)
     await service.close_job(current_user.id, job_id)
+
+
+@router.get("/shortlisted", response_model=list[ShortlistedApplication])
+async def get_shortlisted(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.recruiter])),
+):
+    """All shortlisted candidates across recruiter's jobs."""
+    service = JobService(db)
+    return await service.get_shortlisted(current_user.id)
