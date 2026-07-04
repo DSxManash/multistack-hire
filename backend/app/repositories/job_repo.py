@@ -1,7 +1,7 @@
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.job import Job, Application, ApplicationStatus
+from sqlalchemy.orm import selectinload
 
 
 class JobRepository:
@@ -79,6 +79,7 @@ class ApplicationRepository:
     async def get_job_applications(self, job_id: str) -> list[Application]:
         result = await self.db.execute(
             select(Application)
+            .options(selectinload(Application.candidate))
             .where(Application.job_id == job_id)
             .order_by(Application.applied_at.desc())
         )
@@ -100,4 +101,4 @@ class ApplicationRepository:
         result = await self.db.execute(
             select(func.count()).where(Application.candidate_id == candidate_id)
         )
-        return result.scalar() or 0
+        return result.scalar() or 0 

@@ -64,3 +64,21 @@ class ApplicationWithJob(BaseModel):
     job: JobListResponse
 
     model_config = {"from_attributes": True}
+
+#  Candidate Schemas 
+class CandidateInfo(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    model_config = {"from_attributes": True}
+
+class ApplicationWithCandidate(BaseModel):
+    id: str
+    job_id: str
+    candidate_id: str
+    status: ApplicationStatus
+    applied_at: datetime
+    candidate: CandidateInfo  # ← joined candidate info
+
+    model_config = {"from_attributes": True}
+

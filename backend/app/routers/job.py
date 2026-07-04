@@ -1,15 +1,13 @@
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.security import get_current_user
 from app.models.user import User, UserRole
 from app.models.job import ApplicationStatus
-from app.schemas.job import JobCreate, JobResponse, JobListResponse, ApplicationResponse
+from app.schemas.job import ApplicationWithCandidate, JobCreate, JobResponse, JobListResponse, ApplicationResponse
 from app.services.job_service import JobService
-from fastapi import HTTPException, status
 
-router = APIRouter()
+router = APIRouter() 
 
 
 def require_role(allowed: list[UserRole]):
@@ -24,7 +22,9 @@ def require_role(allowed: list[UserRole]):
     return checker
 
 
-# Candidate endpoints
+# ── Static paths first (no path parameters) ─────────────────────────────────
+
+@router.get("", response_model=list[JobListResponse])
 @router.get("/", response_model=list[JobListResponse])
 async def browse_jobs(
     db: AsyncSession = Depends(get_db),
@@ -35,29 +35,7 @@ async def browse_jobs(
     return await service.browse_jobs()
 
 
-@router.post("/{job_id}/apply", response_model=ApplicationResponse, status_code=201)
-async def apply_to_job(
-    job_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.candidate])),
-):
-    """Candidate applies to a job."""
-    service = JobService(db)
-    return await service.apply_to_job(current_user.id, job_id)
-
-
-@router.get("/my-applications", response_model=list[ApplicationResponse])
-async def my_applications(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.candidate])),
-):
-    """Candidate views their own applications."""
-    service = JobService(db)
-    return await service.my_applications(current_user.id)
-
-
-#  Recruiter endpoints 
-
+@router.post("", response_model=JobResponse, status_code=201)
 @router.post("/", response_model=JobResponse, status_code=201)
 async def create_job(
     data: JobCreate,
@@ -79,18 +57,43 @@ async def my_jobs(
     return await service.get_my_jobs(current_user.id)
 
 
-@router.delete("/{job_id}", status_code=204)
-async def close_job(
+@router.get("/my-applications", response_model=list[ApplicationResponse])
+async def my_applications(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.candidate])),
+):
+    """Candidate views their own applications."""
+    service = JobService(db)
+    return await service.my_applications(current_user.id)
+
+
+# ── Dynamic {job_id} paths after ────────────────────────────────────────────
+# These use path parameters, so they must come AFTER all static GET/POST routes
+# above, otherwise /my-jobs or /my-applications could be swallowed as {job_id}
+# if FastAPI ever changes its matching strategy (defense-in-depth).
+
+@router.post("/{job_id}/apply", response_model=ApplicationResponse, status_code=201)
+async def apply_to_job(
     job_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.recruiter])),
+    current_user: User = Depends(require_role([UserRole.candidate])),
 ):
-    """Recruiter closes/deactivates a job."""
+    """Candidate applies to a job."""
     service = JobService(db)
-    await service.close_job(current_user.id, job_id)
+    return await service.apply_to_job(current_user.id, job_id)
 
 
-@router.get("/{job_id}/applications", response_model=list[ApplicationResponse])
+# @router.get("/{job_id}/applications", response_model=list[ApplicationResponse])
+# async def job_applications(
+#     job_id: str,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(require_role([UserRole.recruiter])),
+# ):
+#     """Recruiter views all applications for their job."""
+#     service = JobService(db)
+#     return await service.get_job_applications(current_user.id, job_id)
+
+@router.get("/{job_id}/applications", response_model=list[ApplicationWithCandidate])
 async def job_applications(
     job_id: str,
     db: AsyncSession = Depends(get_db),
@@ -113,3 +116,14 @@ async def update_status(
     return await service.update_application_status(
         current_user.id, application_id, new_status
     )
+
+
+@router.delete("/{job_id}", status_code=204)
+async def close_job(
+    job_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.recruiter])),
+):
+    """Recruiter closes/deactivates a job."""
+    service = JobService(db)
+    await service.close_job(current_user.id, job_id)
