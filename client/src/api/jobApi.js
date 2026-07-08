@@ -69,3 +69,9 @@ export const getCandidateById = async (userId) => {
   const response = await axiosInstance.get(`/users/candidates/${userId}`)
   return response.data
 }
+
+// Get all shortlisted candidates across all recruiter's jobs
+export const getShortlisted = async () => {
+  const response = await axiosInstance.get('/jobs/shortlisted')
+  return response.data
+}

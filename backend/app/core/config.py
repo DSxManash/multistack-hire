@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_NAME: str = "multistack-hire"
 
+   # MinIO
+    MINIO_ENDPOINT: str = "minio:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin123"
+    MINIO_BUCKET_NAME: str = "multistack-hire-resumes"
+    MINIO_SECURE: bool = False
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

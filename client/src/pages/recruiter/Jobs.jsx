@@ -1,13 +1,16 @@
 
 import { useState, useEffect } from 'react'
+
 import {
-  createJob, getMyJobs, closeJob, getJobApplications
+  createJob, getMyJobs, closeJob, getJobApplications, updateApplicationStatus
 } from '../../api/jobApi'
 import {
   Plus, Briefcase, MapPin, Users, Calendar,
   X, Loader2, CheckCircle2, AlertCircle,
   ChevronRight, Trash2
 } from 'lucide-react'
+
+
 
 const jobTypeLabel = {
   full_time: 'Full Time',
