@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react'
+
 import {
   createJob, getMyJobs, closeJob, getJobApplications, updateApplicationStatus
 } from '../../api/jobApi'
