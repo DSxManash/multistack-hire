@@ -1,16 +1,17 @@
-// client/src/pages/candidate/Profile.jsx
-
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getProfile, updateProfile, uploadResume, getProfileCompletion
 } from '../../api/candidateApi'
-import {
+import * as Icons from 'lucide-react'
+
+const {
   User, Mail, Phone, MapPin, FileText, Github,
   Linkedin, Globe, Briefcase, Plus, X, Upload,
-  CheckCircle2, AlertCircle, Loader2, ExternalLink, Save
-} from 'lucide-react'
+  CheckCircle2, AlertCircle, Loader2, ExternalLink,
+  Save, ShieldAlert
+} = Icons
 
 // ── Profile Completion Bar ─────────────────────────────────────
 function CompletionBar({ percentage, missing }) {
@@ -144,6 +145,7 @@ function InputField({ label, icon: Icon, required, ...props }) {
 export default function CandidateProfile() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const fileInputRef = useRef(null)
 
   const [profile, setProfile] = useState(null)
@@ -154,7 +156,9 @@ export default function CandidateProfile() {
   const [successMsg, setSuccessMsg] = useState(null)
   const [error, setError] = useState(null)
 
-  // Form state
+  const fromApply = location.state?.fromApply ?? false
+  const applyMissing = location.state?.missing ?? []
+
   const [form, setForm] = useState({
     phone_number: '',
     location: '',
@@ -175,7 +179,6 @@ export default function CandidateProfile() {
         ])
         setProfile(profileData)
         setCompletion(completionData)
-        // Populate form with existing data
         setForm({
           phone_number: profileData.phone_number ?? '',
           location: profileData.location ?? '',
@@ -215,7 +218,7 @@ export default function CandidateProfile() {
       setProfile(updated)
       const completionData = await getProfileCompletion()
       setCompletion(completionData)
-      setSuccessMsg('Profile saved successfully!')
+      setSuccessMsg('✅ Profile saved successfully!')
       setTimeout(() => setSuccessMsg(null), 3000)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to save profile')
@@ -234,7 +237,7 @@ export default function CandidateProfile() {
       setProfile(updated)
       const completionData = await getProfileCompletion()
       setCompletion(completionData)
-      setSuccessMsg('Resume uploaded successfully!')
+      setSuccessMsg('✅ Resume uploaded successfully!')
       setTimeout(() => setSuccessMsg(null), 3000)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to upload resume')
@@ -254,7 +257,13 @@ export default function CandidateProfile() {
   return (
     <div className="space-y-6 max-w-3xl">
 
-      {/* Completion bar */}
+      {/* 🔔 Success Toast Popup (fixed top‑right) */}
+      {successMsg && (
+        <div className="fixed top-5 right-5 z-50 rounded-lg bg-green-600 px-5 py-3 text-white shadow-xl animate-bounce">
+          {successMsg}
+        </div>
+      )}
+
       {completion && (
         <CompletionBar
           percentage={completion.percentage}
@@ -262,13 +271,20 @@ export default function CandidateProfile() {
         />
       )}
 
-      {/* Success / Error */}
-      {successMsg && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          {successMsg}
+      {fromApply && (
+        <div className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 dark:border-brand-900 dark:bg-brand-950/30">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-brand-800 dark:text-brand-300">
+              Complete your profile to apply for jobs
+            </p>
+            <p className="mt-0.5 text-xs text-brand-700 dark:text-brand-400">
+              Please fill in the following fields: {applyMissing.join(', ')}
+            </p>
+          </div>
         </div>
       )}
+
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -277,15 +293,13 @@ export default function CandidateProfile() {
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
-
-        {/* Section 1 — Personal Info */}
+        {/* ... rest of the form unchanged ... */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <User className="h-4 w-4 text-brand-600" />
             Personal Information
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Read-only fields */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Full Name
@@ -351,7 +365,6 @@ export default function CandidateProfile() {
           </div>
         </div>
 
-        {/* Section 2 — Social Links (ML Critical) */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <Globe className="h-4 w-4 text-brand-600" />
@@ -419,7 +432,6 @@ export default function CandidateProfile() {
           </div>
         </div>
 
-        {/* Section 3 — Skills */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Plus className="h-4 w-4 text-brand-600" />
@@ -428,7 +440,6 @@ export default function CandidateProfile() {
           <SkillsInput skills={skills} onChange={setSkills} />
         </div>
 
-        {/* Section 4 — Resume */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <FileText className="h-4 w-4 text-brand-600" />
@@ -489,7 +500,6 @@ export default function CandidateProfile() {
           />
         </div>
 
-        {/* Save button */}
         <button
           type="submit"
           disabled={isSaving}

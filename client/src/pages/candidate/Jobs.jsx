@@ -1,9 +1,11 @@
-
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { browseJobs, applyToJob, getMyApplications } from '../../api/jobApi'
+import { getProfileCompletion } from '../../api/candidateApi'
 import {
   Briefcase, MapPin, Clock, Building2,
-  CheckCircle2, Loader2, AlertCircle, Search
+  CheckCircle2, Loader2, AlertCircle,
+  Search, ArrowRight, ShieldAlert
 } from 'lucide-react'
 
 const jobTypeLabel = {
@@ -21,24 +23,29 @@ const jobTypeColor = {
 }
 
 export default function CandidateJobs() {
+  const navigate = useNavigate()
   const [jobs, setJobs] = useState([])
   const [appliedIds, setAppliedIds] = useState(new Set())
-  const [applying, setApplying] = useState(null) // job id currently being applied to
+  const [applying, setApplying] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [successMsg, setSuccessMsg] = useState(null)
+  const [profileCompleted, setProfileCompleted] = useState(false)
+  const [profileMissing, setProfileMissing] = useState([])
 
   useEffect(() => {
     async function load() {
       try {
-        const [jobsData, appsData] = await Promise.all([
+        const [jobsData, appsData, completionData] = await Promise.all([
           browseJobs(),
           getMyApplications(),
+          getProfileCompletion(),
         ])
         setJobs(jobsData)
-        // Build a Set of job IDs the candidate already applied to
         setAppliedIds(new Set(appsData.map((a) => a.job_id)))
+        setProfileCompleted(completionData.completed)
+        setProfileMissing(completionData.missing)
       } catch {
         setError('Failed to load jobs. Please try again.')
       } finally {
@@ -49,15 +56,28 @@ export default function CandidateJobs() {
   }, [])
 
   async function handleApply(jobId) {
+    // ── Profile check ──────────────────────────────────────────
+    if (!profileCompleted) {
+      // Redirect to profile page with message via navigation state
+      navigate('/candidate/profile', {
+        state: {
+          fromApply: true,
+          missing: profileMissing,
+        }
+      })
+      return
+    }
+
     setApplying(jobId)
     setSuccessMsg(null)
+    setError(null)
     try {
       await applyToJob(jobId)
       setAppliedIds((prev) => new Set([...prev, jobId]))
       setSuccessMsg('Application submitted successfully!')
       setTimeout(() => setSuccessMsg(null), 3000)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to apply. Please try again.')
+      setError(err.response?.data?.detail || 'Failed to apply.')
       setTimeout(() => setError(null), 3000)
     } finally {
       setApplying(null)
@@ -87,10 +107,32 @@ export default function CandidateJobs() {
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
           Browse Jobs
         </h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
           {jobs.length} open position{jobs.length !== 1 ? 's' : ''} available
         </p>
       </div>
+
+      {/* Profile incomplete warning banner */}
+      {!profileCompleted && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              Complete your profile to apply for jobs
+            </p>
+            <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
+              Missing: {profileMissing.join(', ')}
+            </p>
+            <button
+              onClick={() => navigate('/candidate/profile')}
+              className="mt-2 flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
+            >
+              Complete Profile
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Success / Error toasts */}
       {successMsg && (
@@ -124,9 +166,6 @@ export default function CandidateJobs() {
           <Briefcase className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
           <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
             {search ? 'No jobs match your search' : 'No jobs available yet'}
-          </p>
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-            {search ? 'Try a different keyword' : 'Check back soon for new postings'}
           </p>
         </div>
       ) : (
@@ -165,9 +204,7 @@ export default function CandidateJobs() {
                   <MapPin className="h-3.5 w-3.5" />
                   {job.location}
                 </div>
-
-                {/* Posted date */}
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
                   <Clock className="h-3.5 w-3.5" />
                   {new Date(job.created_at).toLocaleDateString('en-US', {
                     month: 'short', day: 'numeric', year: 'numeric'
@@ -181,11 +218,20 @@ export default function CandidateJobs() {
                   className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     hasApplied
                       ? 'cursor-default bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
+                      : !profileCompleted
+                      ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-400'
                       : 'bg-brand-600 text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60'
                   }`}
                 >
                   {isApplying && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {hasApplied ? 'Applied' : isApplying ? 'Applying...' : 'Apply Now'}
+                  {hasApplied
+                    ? 'Applied'
+                    : !profileCompleted
+                    ? 'Complete Profile to Apply'
+                    : isApplying
+                    ? 'Applying...'
+                    : 'Apply Now'
+                  }
                 </button>
               </div>
             )
