@@ -10,6 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  base: '/multistack-hire/',
   server: {
     host: '0.0.0.0',   // needed inside Docker to accept external connections
     port: 5173,
