@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { fadeUp } from './motion'
@@ -22,13 +23,13 @@ export default function CTA() {
             using data from GitHub, StackOverflow, and CVs — backed by machine learning.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <a
-              href="/register"
+            <Link
+              to="/register"
               className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
             >
               Evaluate Candidates Now
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
             <a
               href="#features"
               className="text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"

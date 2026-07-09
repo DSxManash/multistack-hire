@@ -10,7 +10,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/multistack-hire/',
+  // GitHub Actions sets VITE_BASE_PATH=/multistack-hire/ for project Pages deploys.
+  base: process.env.VITE_BASE_PATH ?? '/',
   server: {
     host: '0.0.0.0',   // needed inside Docker to accept external connections
     port: 5173,

@@ -6,20 +6,27 @@ on:
       - main
   workflow_dispatch:
 
+# Required for the official GitHub Pages deployment action.
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: ./client
-
     env:
+      # Set in GitHub → Settings → Secrets and variables → Actions → Variables
       VITE_API_URL: ${{ vars.VITE_API_URL }}
-
+      # Project site URL: https://<owner>.github.io/multistack-hire/
+      VITE_BASE_PATH: /multistack-hire/
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,8 +47,18 @@ jobs:
       - name: Add GitHub Pages SPA fallback
         run: cp dist/index.html dist/404.html
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./client/dist
+          path: client/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
