@@ -36,7 +36,7 @@ services:
   db:
     image: postgres:16-alpine
     env_file:
-      - ./database.env
+      - ./backend/.env
     ports:
       - "5432:5432"
     volumes:
@@ -48,16 +48,16 @@ services:
     image: minio/minio:RELEASE.2024-10-13T13-34-11Z
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"   # API — backend connects here
+      - "9005:9005"   # API — backend connects here
       - "9001:9001"   # Console UI — open in browser
     env_file:
-      - ./database.env
+      - ./backend/.env
     volumes:
       - minio_data:/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:9005/minio/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,4 +1,6 @@
-from pydantic_settings import BaseSettings
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 class Settings(BaseSettings):
@@ -6,7 +8,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # JWT
-    SECRET_KEY: str
+    SECRET_KEY: str = "change-this-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
 
@@ -24,9 +26,11 @@ class Settings(BaseSettings):
     MINIO_BUCKET_NAME: str = "multistack-hire-resumes"
     MINIO_SECURE: bool = False
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parents[2] / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 @lru_cache()
 def get_settings() -> Settings:

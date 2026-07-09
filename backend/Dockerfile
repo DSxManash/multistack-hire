@@ -17,5 +17,6 @@ COPY . .
 
 EXPOSE 8000
 
-# Start Uvicorn with hot-reloading active on host binding interfaces
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Apply database migrations before starting the API server.
+# This keeps the development container from serving requests against an empty schema.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
