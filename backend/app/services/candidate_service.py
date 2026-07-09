@@ -3,7 +3,6 @@ import json
 from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from app.models.user import User
 from app.schemas.candidate import ProfileUpdate, ProfileResponse, ProfileCompletionResponse
 from app.utils.minio_client import upload_resume, get_resume_url
@@ -15,10 +14,24 @@ class CandidateService:
         self.db = db
 
     async def get_profile(self, user: User) -> ProfileResponse:
-        """Return profile with skills parsed from JSON."""
-        data = ProfileResponse.model_validate(user)
-        data.skills = user.get_skills()
-        # Generate fresh presigned URL if resume exists
+        skills_list = user.get_skills()
+        data = ProfileResponse(
+            id=user.id,
+            full_name=user.full_name,
+            email=user.email,
+            phone_number=user.phone_number,
+            location=user.location,
+            bio=user.bio,
+            years_of_experience=user.years_of_experience,
+            skills=skills_list,
+            github_username=user.github_username,
+            stackoverflow_username=user.stackoverflow_username,
+            linkedin_url=user.linkedin_url,
+            resume_url=user.resume_url,
+            resume_uploaded_at=user.resume_uploaded_at,
+            ranking_score=user.ranking_score,
+            profile_completed=user.profile_completed,
+        )
         if user.resume_url:
             try:
                 data.resume_url = await get_resume_url(user.resume_url)
@@ -29,9 +42,6 @@ class CandidateService:
     async def update_profile(
         self, user: User, data: ProfileUpdate
     ) -> ProfileResponse:
-        """Update profile fields. Auto-sets profile_completed."""
-
-        # Update only provided fields
         if data.phone_number is not None:
             user.phone_number = data.phone_number
         if data.location is not None:
@@ -49,58 +59,42 @@ class CandidateService:
         if data.linkedin_url is not None:
             user.linkedin_url = data.linkedin_url
 
-        # Auto-check profile completion
         user.profile_completed = user.check_profile_completed()
         user.updated_at = datetime.utcnow()
 
         await self.db.flush()
         await self.db.refresh(user)
-
         return await self.get_profile(user)
 
     async def upload_resume_file(
         self, user: User, file_bytes: bytes, filename: str
     ) -> ProfileResponse:
-        """Upload PDF to MinIO, store object path in user profile."""
-
-        # Validate file size — max 5MB
         max_size = 5 * 1024 * 1024
         if len(file_bytes) > max_size:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="File too large. Maximum size is 5MB"
             )
-
-        # Validate file type
         if not filename.lower().endswith('.pdf'):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only PDF files are accepted"
             )
-
-        # Upload to MinIO — returns object name (path in bucket)
         object_name = await upload_resume(
             file_bytes=file_bytes,
             filename=filename,
             content_type="application/pdf"
         )
-
-        # Store object name in DB (not the full URL — URLs expire,
-        # object names don't. We generate fresh URLs on demand)
         user.resume_url = object_name
         user.resume_uploaded_at = datetime.utcnow()
-
-        # Check if profile is now complete
         user.profile_completed = user.check_profile_completed()
         user.updated_at = datetime.utcnow()
 
         await self.db.flush()
         await self.db.refresh(user)
-
         return await self.get_profile(user)
 
     def get_completion(self, user: User) -> ProfileCompletionResponse:
-        """Calculate profile completion percentage and list missing fields."""
         fields = {
             'GitHub username': user.github_username,
             'StackOverflow username': user.stackoverflow_username,
@@ -111,12 +105,10 @@ class CandidateService:
             'Years of experience': user.years_of_experience,
             'Skills': user.get_skills(),
         }
-
         total = len(fields)
         completed_count = sum(1 for v in fields.values() if v)
         missing = [k for k, v in fields.items() if not v]
         percentage = int((completed_count / total) * 100)
-
         return ProfileCompletionResponse(
             percentage=percentage,
             missing=missing,
