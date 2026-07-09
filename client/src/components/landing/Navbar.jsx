@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Layers, Menu, Moon, Sun, X } from 'lucide-react'
 
@@ -65,18 +66,18 @@ export default function Navbar({ theme, onToggleTheme }) {
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="text-sm font-medium text-slate-700 transition-colors hover:text-brand-600 dark:text-slate-200 dark:hover:text-brand-500"
           >
             Login
-          </a>
-          <a
-            href="/register"
+          </Link>
+          <Link
+            to="/register"
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
           >
             Get Started
-          </a>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -117,20 +118,20 @@ export default function Navbar({ theme, onToggleTheme }) {
               </a>
             ))}
             <hr className="my-2 border-slate-200 dark:border-slate-800" />
-            <a
-              href="/login"
+            <Link
+              to="/login"
               onClick={closeMobile}
               className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
             >
               Login
-            </a>
-            <a
-              href="/register"
+            </Link>
+            <Link
+              to="/register"
               onClick={closeMobile}
               className="mt-1 rounded-lg bg-brand-600 px-3 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-700"
             >
               Get Started
-            </a>
+            </Link>
           </div>
         </motion.div>
       )}

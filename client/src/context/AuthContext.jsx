@@ -1,6 +1,7 @@
 
 import { createContext, useState, useEffect, useCallback } from 'react'
 import { loginUser, registerUser, getCurrentUser, logoutUser } from '../api/authApi'
+import { appPath } from '../lib/appPaths'
 
 
 export const AuthContext = createContext(null)
@@ -100,7 +101,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user')
     setUser(null)
     setError(null)
-    window.location.href = '/login'
+    window.location.href = appPath('/login')
   }, [])
 
   // ── Clear error ─────────────────────────────────────────────────

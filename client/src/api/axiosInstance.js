@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { appPath } from '../lib/appPaths'
 
 const apiBaseUrl = `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/v1`
 
@@ -81,7 +82,7 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('access_token')
         localStorage.removeItem('user')
-        window.location.href = '/login'
+        window.location.href = appPath('/login')
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

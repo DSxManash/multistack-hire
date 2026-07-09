@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, BarChart3, Sparkles } from 'lucide-react'
 import { fadeUp } from './motion'
@@ -50,13 +51,13 @@ export default function Hero() {
             variants={fadeUp}
             className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
           >
-            <a
-              href="/register"
+            <Link
+              to="/register"
               className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
             >
               Start Evaluating Candidates
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
             <a
               href="#workflow"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-brand-200 hover:text-brand-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-brand-800 dark:hover:text-brand-500"
