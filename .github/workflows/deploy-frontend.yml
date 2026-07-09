@@ -6,7 +6,6 @@ on:
       - main
   workflow_dispatch:
 
-# Required for the official GitHub Pages deployment action.
 permissions:
   contents: read
   pages: write
@@ -23,10 +22,13 @@ jobs:
       run:
         working-directory: ./client
     env:
-      # Set in GitHub → Settings → Secrets and variables → Actions → Variables
       VITE_API_URL: ${{ vars.VITE_API_URL }}
-      # Project site URL: https://<owner>.github.io/multistack-hire/
-      VITE_BASE_PATH: /multistack-hire/
+      # Relative asset paths work for both custom domains (/) and
+      # github.io project sites (/repo-name/).
+      VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || './' }}
+      # Leave empty for custom domain root hosting (e.g. multistackhire.example.com).
+      # Set to /multistack-hire only when using https://<user>.github.io/multistack-hire/
+      VITE_ROUTER_BASENAME: ${{ vars.VITE_ROUTER_BASENAME || '' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,8 +46,16 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Add GitHub Pages SPA fallback
-        run: cp dist/index.html dist/404.html
+      - name: Prepare GitHub Pages output
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+
+      - name: Verify build asset paths
+        run: |
+          grep -q 'src="./assets/' dist/index.html || grep -q 'src="/assets/' dist/index.html
+          test -f dist/assets/*.js
+          test -f dist/assets/*.css
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
