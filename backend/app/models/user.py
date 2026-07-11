@@ -26,10 +26,18 @@ class User(Base):
     )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        SAEnum(UserRole), nullable=False,
-        default=UserRole.candidate
+        SAEnum(UserRole, name="userrole", native_enum=True, create_constraint=False),
+        nullable=False,
+        default=UserRole.candidate,
     )
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # ── Profile fields ─────────────────────────────────────────
     phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)

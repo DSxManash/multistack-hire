@@ -9,31 +9,49 @@ def normalize_database_url(url: str) -> str:
     """
     Render/Heroku provide postgresql:// (or postgres://) URLs.
     SQLAlchemy async + asyncpg require postgresql+asyncpg://.
-    Managed Postgres also needs SSL.
+
+    SSL query params are stripped here — asyncpg gets SSL via connect_args
+    (see database.py), because ?ssl=require in the URL is unreliable.
     """
     normalized = url.strip()
 
     if normalized.startswith("postgres://"):
-        normalized = "postgresql+asyncpg://" + normalized[len("postgres://"):]
+        normalized = "postgresql+asyncpg://" + normalized[len("postgres://") :]
     elif normalized.startswith("postgresql://"):
-        normalized = "postgresql+asyncpg://" + normalized[len("postgresql://"):]
+        normalized = "postgresql+asyncpg://" + normalized[len("postgresql://") :]
     elif not normalized.startswith("postgresql+asyncpg://"):
         return normalized
 
     parsed = urlparse(normalized)
-    host = (parsed.hostname or "").lower()
-    is_local = host in {"localhost", "127.0.0.1", "db", "postgres"}
-
-    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-    if not is_local and "ssl" not in query and "sslmode" not in query:
-        query["ssl"] = "require"
-
+    query = {
+        key: value
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key.lower() not in {"ssl", "sslmode"}
+    }
     return urlunparse(parsed._replace(query=urlencode(query)))
+
+
+def database_needs_ssl(url: str) -> bool:
+    """
+    Render *external* hosts (*.render.com) need SSL.
+    Render *internal* hosts (e.g. dpg-xxxxx-a) usually do not — forcing SSL
+    there causes connection failures and 500s on every DB route.
+    """
+    host = (urlparse(url).hostname or "").lower()
+    if host in {"localhost", "127.0.0.1", "db", "postgres"}:
+        return False
+    if host.endswith(".render.com"):
+        return True
+    if "amazonaws.com" in host or "neon.tech" in host or "supabase.co" in host:
+        return True
+    return False
 
 
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
+    # Optional override: true | false | auto (default)
+    DATABASE_SSL: str = "auto"
 
     # JWT
     SECRET_KEY: str = "change-this-secret-key"
@@ -54,7 +72,6 @@ class Settings(BaseSettings):
         "https://multistackhire.manashdevbhatta.com.np,"
         "https://dsxmanash.github.io"
     )
-    # Optional regex (e.g. preview deploys). Empty string disables.
     CORS_ORIGIN_REGEX: str = r"https://.*\.github\.io"
 
     # MinIO
@@ -73,6 +90,15 @@ class Settings(BaseSettings):
     @property
     def async_database_url(self) -> str:
         return normalize_database_url(self.DATABASE_URL)
+
+    @property
+    def use_database_ssl(self) -> bool:
+        flag = (self.DATABASE_SSL or "auto").strip().lower()
+        if flag in {"1", "true", "yes", "require"}:
+            return True
+        if flag in {"0", "false", "no", "disable", "disabled"}:
+            return False
+        return database_needs_ssl(self.async_database_url)
 
     @property
     def cors_origin_list(self) -> list[str]:
