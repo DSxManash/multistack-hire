@@ -33,16 +33,27 @@ def normalize_database_url(url: str) -> str:
 
 def database_needs_ssl(url: str) -> bool:
     """
-    Render *external* hosts (*.render.com) need SSL.
-    Render *internal* hosts (e.g. dpg-xxxxx-a) usually do not — forcing SSL
-    there causes connection failures and 500s on every DB route.
+    Managed Postgres providers require TLS.
+    Local Docker / Render private hostnames do not.
     """
     host = (urlparse(url).hostname or "").lower()
     if host in {"localhost", "127.0.0.1", "db", "postgres"}:
         return False
     if host.endswith(".render.com"):
         return True
-    if "amazonaws.com" in host or "neon.tech" in host or "supabase.co" in host:
+    if any(
+        token in host
+        for token in (
+            "supabase.co",
+            "supabase.com",
+            "neon.tech",
+            "amazonaws.com",
+            "pooler.supabase",
+        )
+    ):
+        return True
+    # Any remote host with a dotted public name — prefer TLS
+    if "." in host:
         return True
     return False
 

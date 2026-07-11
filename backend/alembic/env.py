@@ -3,7 +3,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
@@ -67,18 +67,17 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_migrations_online() -> None:
     """
     Online mode: connect to DB and run migrations directly.
-    We use async engine because our app uses asyncpg.
+    Reuse the same SSL connect args as the app engine.
     """
-    # Build async engine from alembic config
-    # (sqlalchemy.url is already set above from .env)
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,  # no connection pooling for migrations
+    from app.core.database import build_connect_args
+
+    connectable = create_async_engine(
+        settings.async_database_url,
+        poolclass=pool.NullPool,
+        connect_args=build_connect_args(),
     )
 
     async with connectable.connect() as connection:
-        # run_sync bridges async connection into sync Alembic context
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()

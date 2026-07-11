@@ -30,7 +30,7 @@ async def log_startup() -> None:
     print(f"[cors] allow_origins={settings.cors_origin_list}")
     if settings.CORS_ORIGIN_REGEX:
         print(f"[cors] allow_origin_regex={settings.CORS_ORIGIN_REGEX}")
-    print(f"[db] ssl={settings.use_database_ssl} env={settings.APP_ENV}")
+    print(f"[db] ssl={settings.use_database_ssl} verify=disabled env={settings.APP_ENV}")
 
 
 @app.exception_handler(Exception)
