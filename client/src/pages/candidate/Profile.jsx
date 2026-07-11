@@ -7,7 +7,7 @@ import {
 import * as Icons from 'lucide-react'
 
 const {
-  User, Mail, Phone, MapPin, FileText, Github,
+  User, Mail, Phone, MapPin, FileText, GitBranch,
   Linkedin, Globe, Briefcase, Plus, X, Upload,
   CheckCircle2, AlertCircle, Loader2, ExternalLink,
   Save, ShieldAlert
@@ -165,7 +165,7 @@ export default function CandidateProfile() {
     bio: '',
     years_of_experience: '',
     github_username: '',
-    stackoverflow_username: '',
+    leetcode_username: '',
     linkedin_url: '',
   })
   const [skills, setSkills] = useState([])
@@ -185,7 +185,7 @@ export default function CandidateProfile() {
           bio: profileData.bio ?? '',
           years_of_experience: profileData.years_of_experience ?? '',
           github_username: profileData.github_username ?? '',
-          stackoverflow_username: profileData.stackoverflow_username ?? '',
+          leetcode_username: profileData.leetcode_username ?? '',
           linkedin_url: profileData.linkedin_url ?? '',
         })
         setSkills(profileData.skills ?? [])
@@ -218,7 +218,7 @@ export default function CandidateProfile() {
       setProfile(updated)
       const completionData = await getProfileCompletion()
       setCompletion(completionData)
-      setSuccessMsg('✅ Profile saved successfully!')
+      setSuccessMsg(' Profile saved successfully!')
       setTimeout(() => setSuccessMsg(null), 3000)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to save profile')
@@ -237,7 +237,7 @@ export default function CandidateProfile() {
       setProfile(updated)
       const completionData = await getProfileCompletion()
       setCompletion(completionData)
-      setSuccessMsg('✅ Resume uploaded successfully!')
+      setSuccessMsg(' Resume uploaded successfully!')
       setTimeout(() => setSuccessMsg(null), 3000)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to upload resume')
@@ -257,7 +257,7 @@ export default function CandidateProfile() {
   return (
     <div className="space-y-6 max-w-3xl">
 
-      {/* 🔔 Success Toast Popup (fixed top‑right) */}
+      {/*  Success Toast Popup (fixed top‑right) */}
       {successMsg && (
         <div className="fixed top-5 right-5 z-50 rounded-lg bg-green-600 px-5 py-3 text-white shadow-xl animate-bounce">
           {successMsg}
@@ -380,7 +380,7 @@ export default function CandidateProfile() {
             <div>
               <InputField
                 label="GitHub Username"
-                icon={Github}
+                icon={GitBranch}
                 name="github_username"
                 value={form.github_username}
                 onChange={handleChange}
@@ -401,23 +401,23 @@ export default function CandidateProfile() {
             </div>
             <div>
               <InputField
-                label="StackOverflow Username"
+                label="LeetCode Username"
                 icon={Globe}
-                name="stackoverflow_username"
-                value={form.stackoverflow_username}
+                name="leetcode_username"
+                value={form.leetcode_username}
                 onChange={handleChange}
                 placeholder="e.g. 1234567/username"
                 required
               />
-              {form.stackoverflow_username && (
+              {form.leetcode_username && (
                 <a
-                  href={'https://stackoverflow.com/users/' + form.stackoverflow_username}
+                  href={'https://leetcode.com/' + form.leetcode_username}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-1 flex items-center gap-1 text-xs text-brand-600 hover:underline"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  View StackOverflow profile
+                  View LeetCode profile
                 </a>
               )}
             </div>

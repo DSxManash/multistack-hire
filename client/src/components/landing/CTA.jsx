@@ -20,7 +20,7 @@ export default function CTA() {
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-slate-600 dark:text-slate-400">
             Upload candidate profiles and let Multistack Hire rank technical talent
-            using data from GitHub, StackOverflow, and CVs — backed by machine learning.
+            using data from GitHub, LeetCode, and CVs backed by machine learning.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link

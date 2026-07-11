@@ -2,25 +2,25 @@ import { motion } from 'framer-motion'
 import {
   BarChart3,
   Cpu,
-  Eye,
   FileText,
   Code2,
-  MessageSquare,
+  GitBranch,
 } from 'lucide-react'
+
 import { fadeUp, staggerContainer } from './motion'
 
 const features = [
-  {
-    icon: Code2,
-    title: 'GitHub Analysis',
+{
+    icon: GitBranch, 
+    title: 'Github Analysis',
     description:
       'Extracts repository quality, commit frequency, language diversity, and open-source impact to quantify real-world coding experience.',
   },
   {
-    icon: MessageSquare,
-    title: 'StackOverflow Analysis',
+    icon: Code2, 
+    title: 'LeetCode Analysis',
     description:
-      'Measures community reputation, answer quality, and domain expertise across technology tags relevant to the role.',
+      'Measures algorithmic problem-solving skills, data structures proficiency, and coding efficiency across difficulty levels.',
   },
   {
     icon: FileText,
@@ -40,12 +40,7 @@ const features = [
     description:
       'Gradient-boosted models predict candidate suitability scores trained on historical hiring outcomes.',
   },
-  {
-    icon: Eye,
-    title: 'SHAP Explainability',
-    description:
-      'Provides interpretable feature attributions so recruiters understand why each candidate received their rank.',
-  },
+
 ]
 
 export default function Features() {

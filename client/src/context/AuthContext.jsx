@@ -6,6 +6,30 @@ import { appPath } from '../lib/appPaths'
 
 export const AuthContext = createContext(null)
 
+function getAuthErrorMessage(err, fallbackMessage) {
+  if (err?.response?.data) {
+    const data = err.response.data
+
+    if (typeof data === 'string') {
+      return data
+    }
+
+    if (typeof data === 'object') {
+      return data.detail || data.message || data.error || data.msg || fallbackMessage
+    }
+  }
+
+  if (err?.code === 'ERR_NETWORK' || err?.message?.includes('Network Error')) {
+    return 'Unable to reach the server. Please check that the backend is running and try again.'
+  }
+
+  if (err?.response?.status >= 500) {
+    return 'The server is currently unavailable. Please try again in a moment.'
+  }
+
+  return fallbackMessage
+}
+
 export function AuthProvider({ children }) {
   // Core auth state
   const [user, setUser] = useState(null)
@@ -59,7 +83,7 @@ export function AuthProvider({ children }) {
 
       return data.user  
     } catch (err) {
-      const message = err.response?.data?.detail || 'Login failed'
+      const message = getAuthErrorMessage(err, 'Login failed. Please check your email and password.')
       setError(message)
       throw err  
     } finally {
@@ -81,7 +105,7 @@ export function AuthProvider({ children }) {
 
       return data.user
     } catch (err) {
-      const message = err.response?.data?.detail || 'Registration failed'
+      const message = getAuthErrorMessage(err, 'Registration failed. Please try again.')
       setError(message)
       throw err
     } finally {
