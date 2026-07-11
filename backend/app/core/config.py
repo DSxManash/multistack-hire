@@ -19,8 +19,16 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_NAME: str = "multistack-hire"
 
-    # CORS — comma-separated frontend origins (required for browser login from Pages/custom domain)
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+    # CORS — comma-separated frontend origins (no trailing slash).
+    # Override on Render with the same list if you add more domains.
+    CORS_ORIGINS: str = (
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173,"
+        "https://multistackhire.manashdevbhatta.com.np,"
+        "https://dsxmanash.github.io"
+    )
+    # Optional regex (e.g. preview deploys). Empty string disables.
+    CORS_ORIGIN_REGEX: str = r"https://.*\.github\.io"
 
     # MinIO
     MINIO_ENDPOINT: str = "minio:9000"
@@ -37,7 +45,7 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        return [origin.strip().rstrip("/") for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     @property
     def is_production(self) -> bool:
