@@ -27,9 +27,12 @@ if config.config_file_name is not None:
 # Base.metadata knows about all models imported above
 target_metadata = Base.metadata
 
-# Override the sqlalchemy.url from alembic.ini with our .env value
-# This way we never hardcode the DB URL in alembic.ini
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Override the sqlalchemy.url from alembic.ini with our .env value.
+# Escape % for ConfigParser (common in generated DB passwords).
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.async_database_url.replace("%", "%%"),
+)
 
 
 def run_migrations_offline() -> None:
