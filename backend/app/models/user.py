@@ -1,6 +1,7 @@
 import uuid
 import json
 from datetime import datetime
+from app.models.company import Company 
 from sqlalchemy import String, Boolean, DateTime, Enum as SAEnum, Integer, Text, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
@@ -82,6 +83,11 @@ class User(Base):
         "Application", back_populates="candidate",
         cascade="all, delete-orphan"
     )
+
+    company: Mapped["Company | None"] = relationship(
+    "Company", back_populates="recruiter",
+    uselist=False  # one-to-one
+)
 
     def get_skills(self) -> list[str]:
         """Parse skills JSON string to list."""

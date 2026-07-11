@@ -12,6 +12,9 @@ from app.models import user          # noqa: F401
 from app.models import refresh_token # noqa: F401
 from app.models import job           # noqa: F401
 
+from app.routers import company          # add to imports
+from app.models import company as company_model  # noqa: F401
+
 app = FastAPI(title="Multistack Hire API", version="1.0.0")
 
 app.add_middleware(
@@ -57,7 +60,7 @@ app.include_router(ranking.router,    prefix="/api/v1/ranking",   tags=["Ranking
 app.include_router(job_router.router, prefix="/api/v1/jobs",      tags=["Jobs"])
 app.include_router(users.router,      prefix="/api/v1/users",     tags=["Users"])
 app.include_router(candidate.router,  prefix="/api/v1/candidate", tags=["Candidate"])
-
+app.include_router(company.router, prefix="/api/v1/company", tags=["Company"])
 
 @app.get("/health", tags=["Health"])
 async def health_check():
