@@ -19,7 +19,10 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_NAME: str = "multistack-hire"
 
-   # MinIO
+    # CORS — comma-separated frontend origins (required for browser login from Pages/custom domain)
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+
+    # MinIO
     MINIO_ENDPOINT: str = "minio:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin123"
@@ -31,6 +34,14 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @property
+    def is_production(self) -> bool:
+        return self.APP_ENV.lower() == "production"
 
 @lru_cache()
 def get_settings() -> Settings:

@@ -18,19 +18,17 @@ def set_refresh_cookie(response: Response, raw_token: str) -> None:
     """
     Set refresh token as httpOnly cookie on the response.
 
-    httpOnly=True  → JavaScript cannot read this cookie at all
-    secure=True    → Only sent over HTTPS (set False for local dev)
-    samesite=lax   → Sent on same-site requests + top-level navigation
-                     Blocks CSRF from third-party sites
-    max_age        → Browser auto-deletes after 7 days
-    path=/api/v1/auth → Cookie only sent to auth endpoints, not every request
+    Cross-origin frontend (GitHub Pages / custom domain) → API (Render) requires
+    SameSite=None and Secure=True so the browser will attach the cookie on XHR.
+    Local same-origin/dev keeps Lax + Secure=False.
     """
+    cross_site = settings.is_production
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=raw_token,
         httponly=True,
-        secure=settings.APP_ENV == "production",  # True in prod, False in dev
-        samesite="lax",
+        secure=cross_site,
+        samesite="none" if cross_site else "lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path="/api/v1/auth",
     )
