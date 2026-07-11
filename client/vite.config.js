@@ -1,39 +1,28 @@
-
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-const proxyTarget = process.env.VITE_PROXY_TARGET ?? 'http://localhost:8000'
+export default defineConfig(({ mode }) => {
+  // Browser API calls use VITE_API_URL directly (see src/api/config.js).
+  // No Vite proxy — avoids relative /api requests hitting the frontend origin.
+  const env = loadEnv(mode, process.cwd(), '')
 
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-  // Production (GitHub Pages / custom domain): set VITE_BASE_PATH=./ in CI.
-  // Local dev defaults to /.
-  base: process.env.VITE_BASE_PATH ?? '/',
-  server: {
-    host: '0.0.0.0',   // needed inside Docker to accept external connections
-    port: 5173,
-    watch: {
-      usePolling: true, // Docker volume hot-reload
-    },
-    hmr: {
-      host: 'localhost',
-    },
-    proxy: {
-      // ALL requests starting with /api
-      '/api': {
-        target: proxyTarget,
-        changeOrigin: true,
-      
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+    ],
+    // Production (GitHub Pages / custom domain): set VITE_BASE_PATH=./ in CI.
+    base: env.VITE_BASE_PATH || process.env.VITE_BASE_PATH || '/',
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      watch: {
+        usePolling: true,
       },
-      // for health checks, we also proxy /health to the backend
-      '/health': {
-        target: proxyTarget,
-        changeOrigin: true,
+      hmr: {
+        host: 'localhost',
       },
     },
-  },
+  }
 })

@@ -1,35 +1,29 @@
 import axios from 'axios'
 import { appPath } from '../lib/appPaths'
-
-const apiBaseUrl = `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/v1`
+import { API_V1_URL } from './config'
 
 const axiosInstance = axios.create({
-  baseURL: apiBaseUrl,
+  baseURL: API_V1_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // fail after 10 seconds instead of hanging forever
+  timeout: 10000,
   withCredentials: true,
 })
 
-// REQUEST INTERCEPTOR: Runs before every single API call automatically
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Get token from localStorage (we'll store it here after login)
     const token = localStorage.getItem('access_token')
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
 
-    return config 
+    return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
-// RESPONSE INTERCEPTOR: Runs after every single API response automatically
 let isRefreshing = false
 let refreshSubscribers = []
 
