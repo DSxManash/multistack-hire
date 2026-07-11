@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Brain, Code2, MessageSquare, Users } from 'lucide-react'
+import { Brain, Code2,  FolderGit2, Users } from 'lucide-react'
 import { fadeUp, staggerContainer } from './motion'
 
 const stats = [
@@ -10,15 +10,15 @@ const stats = [
     description: 'Profiles assessed across technical roles',
   },
   {
-    icon: Code2,
+    icon: FolderGit2,
     value: '58,000+',
     label: 'GitHub Metrics',
     description: 'Repositories, commits, and contributions analyzed',
   },
   {
-    icon: MessageSquare,
+    icon:  Code2,
     value: '31,200+',
-    label: 'StackOverflow Contributions',
+    label: 'LeetCode Contributions',
     description: 'Answers, reputation, and tag expertise scored',
   },
   {

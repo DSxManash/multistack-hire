@@ -92,13 +92,20 @@ export default function CandidateDashboard() {
     <div className="space-y-6">
 
       {/* ── Welcome banner ─────────────────────────────── */}
-      <div className="rounded-xl border border-brand-100 bg-brand-50 px-6 py-5 dark:border-brand-900 dark:bg-brand-950/30">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Welcome back, {user?.full_name?.split(' ')[0]} 👋
-        </h2>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Complete your profile and upload your resume to get your AI-powered ranking score.
-        </p>
+      <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Welcome back, {user?.full_name?.split(' ')[0]} 👋
+            </h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Complete your profile and upload your resume to get your AI-powered ranking score.
+            </p>
+          </div>
+          <span className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-brand-900 dark:bg-brand-950/40 dark:text-brand-400">
+            AI-powered insights ready
+          </span>
+        </div>
       </div>
 
       {/* ── Stat cards ─────────────────────────────────── */}
@@ -137,10 +144,10 @@ export default function CandidateDashboard() {
           <div className="space-y-3">
             <Link
               to="/candidate/resume"
-              className="flex items-center justify-between rounded-lg border border-slate-200 p-4 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:border-brand-700 dark:hover:bg-brand-950/30"
+              className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand-700 dark:hover:bg-slate-800"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 transition-colors group-hover:bg-brand-100 dark:bg-brand-950 dark:group-hover:bg-brand-900/70">
                   <Upload className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                 </div>
                 <div>
@@ -148,31 +155,31 @@ export default function CandidateDashboard() {
                   <p className="text-xs text-slate-500 dark:text-slate-400">PDF format, max 5MB</p>
                 </div>
               </div>
-              <ArrowRight className="h-4 w-4 text-slate-400" />
+              <ArrowRight className="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-brand-600 dark:group-hover:text-brand-400" />
             </Link>
 
             <Link
               to="/candidate/profile"
-              className="flex items-center justify-between rounded-lg border border-slate-200 p-4 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:border-brand-700 dark:hover:bg-brand-950/30"
+              className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-300 hover:bg-purple-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-purple-700 dark:hover:bg-slate-800"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-950">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 transition-colors group-hover:bg-purple-100 dark:bg-purple-950 dark:group-hover:bg-purple-900/70">
                   <User className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-900 dark:text-white">Complete Profile</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Add GitHub & StackOverflow</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Add GitHub & LeetCode</p>
                 </div>
               </div>
-              <ArrowRight className="h-4 w-4 text-slate-400" />
+              <ArrowRight className="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-purple-600 dark:group-hover:text-purple-400" />
             </Link>
 
             <Link
               to="/candidate/ranking"
-              className="flex items-center justify-between rounded-lg border border-slate-200 p-4 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:border-brand-700 dark:hover:bg-brand-950/30"
+              className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:bg-green-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-green-700 dark:hover:bg-slate-800"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 transition-colors group-hover:bg-green-100 dark:bg-green-950 dark:group-hover:bg-green-900/70">
                   <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
@@ -180,7 +187,7 @@ export default function CandidateDashboard() {
                   <p className="text-xs text-slate-500 dark:text-slate-400">AI-powered score breakdown</p>
                 </div>
               </div>
-              <ArrowRight className="h-4 w-4 text-slate-400" />
+              <ArrowRight className="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-green-600 dark:group-hover:text-green-400" />
             </Link>
           </div>
         </div>

@@ -3,16 +3,16 @@ import { CheckCircle2, Cpu, GitBranch, Shield } from 'lucide-react'
 import { fadeUp, staggerContainer } from './motion'
 
 const pipelineLayers = [
-  { label: 'Input Layer', items: ['GitHub API', 'StackOverflow API', 'Resume Parser'] },
+  { label: 'Input Layer', items: ['GitHub API', 'LeetCode API', 'Resume Parser'] },
   { label: 'Feature Layer', items: ['Skill vectors', 'Activity metrics', 'Experience encoding'] },
   { label: 'Model Layer', items: ['XGBoost Classifier', 'Cross-validation', 'Hyperparameter tuning'] },
-  { label: 'Output Layer', items: ['Suitability score', 'Ranked list', 'SHAP explanations'] },
+  { label: 'Output Layer', items: ['Suitability score', 'Ranked list'] },
 ]
 
 const highlights = [
   'Handles heterogeneous data from three independent sources',
   'XGBoost captures non-linear feature interactions effectively',
-  'SHAP values provide per-candidate feature attribution',
+  
   'Designed for reproducibility and academic evaluation',
 ]
 
@@ -36,8 +36,7 @@ export default function MLSection() {
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-400">
               Multistack Hire uses gradient boosting to learn patterns from
-              multi-stack developer profiles. SHAP (SHapley Additive exPlanations)
-              ensures every ranking decision is auditable and defensible.
+              multi-stack developer profiles. 
             </p>
 
             <motion.ul
@@ -73,7 +72,7 @@ export default function MLSection() {
               </div>
               <div>
                 <p className="font-semibold text-slate-900 dark:text-white">Model Pipeline</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">XGBoost · SHAP · Python</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">XGBoost ·  Python</p>
               </div>
             </div>
 

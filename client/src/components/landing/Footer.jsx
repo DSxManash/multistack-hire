@@ -35,7 +35,7 @@ export default function Footer() {
             </a>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500 dark:text-slate-400">
               An AI-powered candidate ranking and evaluation platform for modern
-              technical hiring — built as a final-year university research project.
+              technical hiring  built as a final-year university research project.
             </p>
             <div className="mt-5 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               <GraduationCap className="h-4 w-4" />

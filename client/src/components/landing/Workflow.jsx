@@ -2,19 +2,18 @@ import { motion } from 'framer-motion'
 import {
   ArrowRight,
   BarChart3,
-  Database,
+  Trophy,
   Eye,
   Layers,
   SlidersHorizontal,
-  Trophy,
 } from 'lucide-react'
 import { fadeUp, staggerContainer } from './motion'
 
 const steps = [
   {
-    icon: Database,
+    icon: Trophy,
     title: 'Data Sources',
-    description: 'GitHub, StackOverflow, and CV inputs',
+    description: 'GitHub, LeetCode, and CV inputs',
   },
   {
     icon: SlidersHorizontal,
@@ -36,11 +35,7 @@ const steps = [
     title: 'Candidate Ranking',
     description: 'Order candidates by predicted fit',
   },
-  {
-    icon: Eye,
-    title: 'SHAP Insights',
-    description: 'Explain top contributing features',
-  },
+
 ]
 
 export default function Workflow() {
