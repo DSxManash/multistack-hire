@@ -22,6 +22,7 @@ const pageTitles = {
   '/admin/analytics': 'System Analytics',
    '/recruiter/jobs': 'Job Postings',
   '/candidate/jobs': 'Browse Jobs',
+  '/recruiter/company': 'Company Profile',
 
 }
 

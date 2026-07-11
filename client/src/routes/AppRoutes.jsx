@@ -32,7 +32,7 @@ import Profile from '../pages/candidate/Profile'
 import ResumeUpload from '../pages/candidate/ResumeUpload'
 import Ranking from '../pages/candidate/Ranking'
 import Settings from '../pages/candidate/Settings'
-
+import RecruiterCompany from '../pages/recruiter/Company'
 import RecruiterJobs from '../pages/recruiter/Jobs'
 
 function getRoleDashboard(role) {
@@ -90,7 +90,7 @@ export default function AppRoutes() {
             <Route path="/recruiter/candidates/:id" element={<CandidateDetails />} />
             <Route path="/recruiter/shortlist" element={<Shortlist />} />
             <Route path="/recruiter/analytics" element={<Analytics />} />
-            
+            <Route path="/recruiter/company" element={<RecruiterCompany />} />
           </Route>
         </Route>
 
