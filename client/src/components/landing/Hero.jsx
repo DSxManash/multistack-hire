@@ -40,8 +40,8 @@ export default function Hero() {
             className="mt-6 text-lg leading-relaxed text-slate-600 sm:text-xl dark:text-slate-400"
           >
             Multistack Hire evaluates technical talent by combining GitHub activity,
-            StackOverflow contributions, and CV analysis into a unified machine learning
-            pipeline — delivering transparent, data-driven hiring decisions.
+            LeetCode contributions, and CV analysis into a unified machine learning
+            pipeline  delivering transparent, data-driven hiring decisions.
           </motion.p>
 
           <motion.div

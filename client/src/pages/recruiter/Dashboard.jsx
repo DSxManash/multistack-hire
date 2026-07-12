@@ -212,7 +212,7 @@ export default function RecruiterDashboard() {
                 <Link
                   key={a.to}
                   to={a.to}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 p-4 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:border-brand-700 dark:hover:bg-brand-950/30"
+                  className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand-700 dark:hover:bg-slate-800"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${a.iconBg}`}>
@@ -223,7 +223,7 @@ export default function RecruiterDashboard() {
                       <p className="text-xs text-slate-500 dark:text-slate-400">{a.sub}</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               ))}
             </div>
