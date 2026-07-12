@@ -112,7 +112,7 @@ export default function Navbar({ theme, onToggleTheme }) {
                 key={link.href}
                 href={link.href}
                 onClick={closeMobile}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
               >
                 {link.label}
               </a>
@@ -121,7 +121,7 @@ export default function Navbar({ theme, onToggleTheme }) {
             <Link
               to="/login"
               onClick={closeMobile}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
             >
               Login
             </Link>
