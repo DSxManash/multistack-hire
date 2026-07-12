@@ -4,6 +4,8 @@ import Stats from '../../components/landing/Stats'
 import Features from '../../components/landing/Features'
 import Workflow from '../../components/landing/Workflow'
 import MLSection from '../../components/landing/MLSection'
+import Testimonials from '../../components/landing/Testimonials'
+import FAQ from '../../components/landing/FAQ'
 import CTA from '../../components/landing/CTA'
 import Footer from '../../components/landing/Footer'
 import { useTheme } from '../../hooks/useTheme'
@@ -20,6 +22,8 @@ export default function LandingPage() {
         <Features />
         <Workflow />
         <MLSection />
+        <Testimonials />
+        <FAQ />
         <CTA />
       </main>
       <Footer />
