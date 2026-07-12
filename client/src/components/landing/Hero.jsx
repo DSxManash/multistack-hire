@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, BarChart3, Sparkles, Github, Code2, FileText, CheckCircle2, Cpu } from 'lucide-react'
+import { ArrowRight, BarChart3, Sparkles, Code2, FileText, CheckCircle2, Cpu } from 'lucide-react'
 import { fadeUp } from './motion'
 
 const mockCandidates = [
@@ -222,7 +222,7 @@ export default function Hero() {
                           <div>
                             <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400">
                               <span className="flex items-center gap-1">
-                                <Github className="h-3 w-3" /> GitHub Metric
+                                <Code2 className="h-3 w-3" /> GitHub Metric
                               </span>
                               <span>{mockCandidates[selectedCandidate].metrics.git}%</span>
                             </div>
