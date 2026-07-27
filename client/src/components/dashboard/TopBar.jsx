@@ -4,6 +4,7 @@ import { Menu, Sun, Moon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
 
+
 // Map route paths to human-readable page titles
 const pageTitles = {
   '/candidate/dashboard': 'Dashboard',

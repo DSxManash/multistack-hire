@@ -75,3 +75,9 @@ export const getShortlisted = async () => {
   const response = await axiosInstance.get('/jobs/shortlisted')
   return response.data
 }
+
+// Get analytics for the recruiter's jobs
+export const getRecruiterAnalytics = async () => {
+  const response = await axiosInstance.get('/jobs/analytics')
+  return response.data
+}
