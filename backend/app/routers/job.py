@@ -8,6 +8,7 @@ from app.schemas.job import ApplicationWithCandidate, JobCreate, JobResponse, Jo
 from app.services.job_service import JobService
 from app.schemas.job import ShortlistedApplication
 
+from sqlalchemy import select, func, case
 
 router = APIRouter() 
 
@@ -94,6 +95,94 @@ async def apply_to_job(
 #     """Recruiter views all applications for their job."""
 #     service = JobService(db)
 #     return await service.get_job_applications(current_user.id, job_id)
+@router.get("/analytics", response_model=dict)
+async def get_analytics(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.recruiter])),
+):
+    """
+    Returns all analytics data for the recruiter in one call.
+    Avoids N+1 queries by using SQL aggregates.
+    """
+    from app.models.job import Job, Application, ApplicationStatus
+
+    # Total jobs posted by this recruiter
+    total_jobs_result = await db.execute(
+        select(func.count()).where(Job.recruiter_id == current_user.id)
+    )
+    total_jobs = total_jobs_result.scalar() or 0
+
+    # Active vs closed jobs
+    active_jobs_result = await db.execute(
+        select(func.count()).where(
+            Job.recruiter_id == current_user.id,
+            Job.is_active == True
+        )
+    )
+    active_jobs = active_jobs_result.scalar() or 0
+
+    # Total applications across all recruiter's jobs
+    total_apps_result = await db.execute(
+        select(func.count())
+        .select_from(Application)
+        .join(Job, Application.job_id == Job.id)
+        .where(Job.recruiter_id == current_user.id)
+    )
+    total_applications = total_apps_result.scalar() or 0
+
+    # Applications by status
+    status_result = await db.execute(
+        select(Application.status, func.count().label("count"))
+        .join(Job, Application.job_id == Job.id)
+        .where(Job.recruiter_id == current_user.id)
+        .group_by(Application.status)
+    )
+    status_rows = status_result.all()
+    status_breakdown = {row.status.value: row.count for row in status_rows}
+
+    # Applications per job (for bar chart)
+    apps_per_job_result = await db.execute(
+        select(Job.title, func.count(Application.id).label("count"))
+        .outerjoin(Application, Application.job_id == Job.id)
+        .where(Job.recruiter_id == current_user.id)
+        .group_by(Job.id, Job.title)
+        .order_by(func.count(Application.id).desc())
+        .limit(10)
+    )
+    apps_per_job = [
+        {"job": row.title, "applications": row.count}
+        for row in apps_per_job_result.all()
+    ]
+
+    # Shortlist rate
+    shortlisted = status_breakdown.get("shortlisted", 0)
+    shortlist_rate = round(
+        (shortlisted / total_applications * 100) if total_applications > 0 else 0, 1
+    )
+
+    # Rejection rate
+    rejected = status_breakdown.get("rejected", 0)
+    rejection_rate = round(
+        (rejected / total_applications * 100) if total_applications > 0 else 0, 1
+    )
+
+    return {
+        "total_jobs": total_jobs,
+        "active_jobs": active_jobs,
+        "closed_jobs": total_jobs - active_jobs,
+        "total_applications": total_applications,
+        "shortlist_rate": shortlist_rate,
+        "rejection_rate": rejection_rate,
+        "status_breakdown": {
+            "applied": status_breakdown.get("applied", 0),
+            "reviewed": status_breakdown.get("reviewed", 0),
+            "shortlisted": status_breakdown.get("shortlisted", 0),
+            "rejected": status_breakdown.get("rejected", 0),
+        },
+        "apps_per_job": apps_per_job,
+    }
+
+
 
 @router.get("/{job_id}/applications", response_model=list[ApplicationWithCandidate])
 async def job_applications(
@@ -139,3 +228,6 @@ async def get_shortlisted(
     """All shortlisted candidates across recruiter's jobs."""
     service = JobService(db)
     return await service.get_shortlisted(current_user.id)
+
+
+
