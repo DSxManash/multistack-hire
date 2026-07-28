@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getAdminStats, getAllUsers } from '../../api/adminApi'
+import { fetchHealth, fetchHealthDb } from '../../api/healthApi'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart,
@@ -15,13 +16,20 @@ import {
 export default function SystemAnalytics() {
   const [stats, setStats] = useState(null)
   const [users, setUsers] = useState([])
+  const [health, setHealth] = useState({ api: 'checking', db: 'checking' })
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getAdminStats(), getAllUsers()])
-      .then(([statsData, usersData]) => {
+    Promise.all([
+      getAdminStats(),
+      getAllUsers(),
+      fetchHealth().then(() => 'operational').catch(() => 'error'),
+      fetchHealthDb().then(() => 'operational').catch(() => 'error'),
+    ])
+      .then(([statsData, usersData, apiStatus, dbStatus]) => {
         setStats(statsData)
         setUsers(usersData)
+        setHealth({ api: apiStatus, db: dbStatus })
       })
       .finally(() => setIsLoading(false))
   }, [])
@@ -225,10 +233,18 @@ export default function SystemAnalytics() {
         </h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {[
-            { label: 'FastAPI Backend',     status: 'operational', note: 'Running on port 8000' },
-            { label: 'PostgreSQL Database', status: 'operational', note: 'Connected via asyncpg' },
-            { label: 'MinIO Storage',       status: 'operational', note: 'Resume storage active' },
-            { label: 'ML Pipeline',         status: 'pending',     note: 'Integration in progress' },
+            {
+              label: 'FastAPI Backend',
+              status: health.api,
+              note: health.api === 'operational' ? 'Responding to /health' : 'Health check failed',
+            },
+            {
+              label: 'PostgreSQL Database',
+              status: health.db,
+              note: health.db === 'operational' ? 'Connected via asyncpg' : 'Database unreachable',
+            },
+            { label: 'MinIO Storage', status: 'pending', note: 'Resume storage (not health-checked)' },
+            { label: 'ML Pipeline', status: 'pending', note: 'Integration in progress' },
           ].map(s => (
             <div
               key={s.label}
@@ -238,7 +254,9 @@ export default function SystemAnalytics() {
                 <ShieldCheck className={`h-4 w-4 shrink-0 ${
                   s.status === 'operational'
                     ? 'text-green-500'
-                    : 'text-amber-500'
+                    : s.status === 'error'
+                      ? 'text-red-500'
+                      : 'text-amber-500'
                 }`} />
                 <div>
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -250,9 +268,11 @@ export default function SystemAnalytics() {
               <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                 s.status === 'operational'
                   ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
-                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
+                  : s.status === 'error'
+                    ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400'
+                    : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
               }`}>
-                {s.status === 'operational' ? 'Online' : 'Pending'}
+                {s.status === 'operational' ? 'Online' : s.status === 'error' ? 'Offline' : 'Pending'}
               </span>
             </div>
           ))}

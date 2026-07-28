@@ -90,7 +90,7 @@ const stats = [
       iconBg: 'bg-brand-50 dark:bg-brand-950',
       iconColor: 'text-brand-600 dark:text-brand-400',
       title: 'Manage Users',
-      sub: 'View, activate, deactivate accounts',
+      sub: 'View, activate, deactivate, delete, change roles',
     },
     {
       to: '/admin/model',

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, field_validator
 from app.models.user import UserRole
 
@@ -37,8 +39,13 @@ class UserResponse(BaseModel):
     email: str
     role: UserRole
     is_active: bool
+    created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UpdateUserRoleRequest(BaseModel):
+    role: UserRole
 
 
 class TokenResponse(BaseModel):

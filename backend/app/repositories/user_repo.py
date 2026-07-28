@@ -1,6 +1,6 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from app.models.user import User, UserRole
 
 
@@ -55,12 +55,33 @@ class UserRepository:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_all_users(self) -> list[User]:
+    async def get_all_users(
+        self,
+        search: str | None = None,
+        role: UserRole | None = None,
+    ) -> list[User]:
         """Return all users — admin use only."""
-        result = await self.db.execute(
-            select(User).order_by(User.created_at.desc())
-        )
+        query = select(User)
+
+        if role:
+            query = query.where(User.role == role)
+
+        if search:
+            pattern = f"%{search}%"
+            query = query.where(
+                User.full_name.ilike(pattern) |
+                User.email.ilike(pattern)
+            )
+
+        query = query.order_by(User.created_at.desc())
+        result = await self.db.execute(query)
         return list(result.scalars().all())
+
+    async def count_by_role(self, role: UserRole) -> int:
+        result = await self.db.execute(
+            select(func.count()).select_from(User).where(User.role == role)
+        )
+        return result.scalar() or 0
 
     async def set_active(self, user_id: str, is_active: bool) -> User | None:
         """Admin: activate or deactivate a user account."""
@@ -68,4 +89,21 @@ class UserRepository:
         if user:
             user.is_active = is_active
             await self.db.flush()
+            await self.db.refresh(user)
         return user
+
+    async def update_role(self, user_id: str, role: UserRole) -> User | None:
+        user = await self.get_by_id(user_id)
+        if user:
+            user.role = role
+            await self.db.flush()
+            await self.db.refresh(user)
+        return user
+
+    async def delete(self, user_id: str) -> bool:
+        user = await self.get_by_id(user_id)
+        if not user:
+            return False
+        await self.db.delete(user)
+        await self.db.flush()
+        return True

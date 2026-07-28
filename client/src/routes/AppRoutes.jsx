@@ -17,7 +17,6 @@ import AboutPage from '../pages/public/AboutPage'
 import AdminDashboard from '../pages/admin/Dashboard'
 import UserManagement from '../pages/admin/UserManagement'
 import ModelManagement from '../pages/admin/ModelManagement'
-import RetrainModel from '../pages/admin/RetrainModel'
 import SystemAnalytics from '../pages/admin/SystemAnalytics'
 
 import RecruiterDashboard from '../pages/recruiter/Dashboard'
@@ -76,7 +75,7 @@ export default function AppRoutes() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/model" element={<ModelManagement />} />
-            <Route path="/admin/model/retrain" element={<RetrainModel />} />
+            <Route path="/admin/model/retrain" element={<Navigate to="/admin/model" replace />} />
             <Route path="/admin/analytics" element={<SystemAnalytics />} />
           </Route>
         </Route>

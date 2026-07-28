@@ -12,3 +12,14 @@ export async function fetchHealth() {
 
   return response.json()
 }
+
+export async function fetchHealthDb() {
+  const response = await fetch(`${API_BASE_URL}/health/db`)
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.error || `Database health check failed (${response.status})`)
+  }
+
+  return data
+}
