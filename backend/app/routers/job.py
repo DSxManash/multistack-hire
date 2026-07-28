@@ -183,6 +183,57 @@ async def get_analytics(
     }
 
 
+ # recruiter stats endpoint 
+@router.get("/dashboard-stats")
+async def get_recruiter_dashboard_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.recruiter])),
+):
+    """Quick stats for recruiter dashboard cards."""
+    from sqlalchemy import func
+    from app.models.job import Job, Application, ApplicationStatus
+    from app.models.user import UserRole as UR
+
+    # Total candidates in system
+    candidates_result = await db.execute(
+        select(func.count()).where(User.role == UR.candidate)
+    )
+    total_candidates = candidates_result.scalar() or 0
+
+    # Shortlisted by this recruiter
+    shortlisted_result = await db.execute(
+        select(func.count())
+        .select_from(Application)
+        .join(Job, Application.job_id == Job.id)
+        .where(
+            Job.recruiter_id == current_user.id,
+            Application.status == ApplicationStatus.shortlisted,
+        )
+    )
+    shortlisted = shortlisted_result.scalar() or 0
+
+    # Avg ranking score of shortlisted candidates
+    from sqlalchemy import func as sqlfunc
+    from app.models.user import User as UserModel
+    avg_result = await db.execute(
+        select(sqlfunc.avg(UserModel.ranking_score))
+        .select_from(Application)
+        .join(Job, Application.job_id == Job.id)
+        .join(UserModel, Application.candidate_id == UserModel.id)
+        .where(
+            Job.recruiter_id == current_user.id,
+            Application.status == ApplicationStatus.shortlisted,
+            UserModel.ranking_score.isnot(None),
+        )
+    )
+    avg_score = avg_result.scalar()
+
+    return {
+        "total_candidates": total_candidates,
+        "shortlisted": shortlisted,
+        "avg_score": round(avg_score, 1) if avg_score else None,
+    }
+
 
 @router.get("/{job_id}/applications", response_model=list[ApplicationWithCandidate])
 async def job_applications(

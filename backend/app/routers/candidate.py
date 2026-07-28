@@ -83,3 +83,30 @@ async def change_password(
     """Change candidate password after verifying current one."""
     service = CandidateService(db)
     return await service.change_password(current_user, data)
+
+
+
+# admin dashboard stats endpoint
+@router.get("/stats")
+async def get_candidate_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_candidate),
+):
+    """Dashboard stats for candidate."""
+    from sqlalchemy import func, select
+    from app.models.job import Application
+
+    # Count applications
+    result = await db.execute(
+        select(func.count()).where(
+            Application.candidate_id == current_user.id
+        )
+    )
+    jobs_applied = result.scalar() or 0
+
+    return {
+        "jobs_applied": jobs_applied,
+        "ranking_score": current_user.ranking_score,
+        "resume_uploaded": current_user.resume_url is not None,
+        "profile_completed": current_user.profile_completed,
+    }    

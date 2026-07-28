@@ -91,3 +91,40 @@ async def deactivate_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+# Admin dashboard stats endpoint 
+@router.get("/stats")
+async def get_admin_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.admin])),
+):
+    """System-wide stats for admin dashboard."""
+    from sqlalchemy import func, select
+    from app.models.user import User, UserRole
+
+    # Total users by role
+    total_result = await db.execute(select(func.count()).select_from(User))
+    total = total_result.scalar() or 0
+
+    candidates_result = await db.execute(
+        select(func.count()).where(User.role == UserRole.candidate)
+    )
+    candidates = candidates_result.scalar() or 0
+
+    recruiters_result = await db.execute(
+        select(func.count()).where(User.role == UserRole.recruiter)
+    )
+    recruiters = recruiters_result.scalar() or 0
+
+    ranked_result = await db.execute(
+        select(func.count()).where(User.ranking_score.isnot(None))
+    )
+    ranked = ranked_result.scalar() or 0
+
+    return {
+        "total_users": total,
+        "total_candidates": candidates,
+        "total_recruiters": recruiters,
+        "rankings_generated": ranked,
+    }
