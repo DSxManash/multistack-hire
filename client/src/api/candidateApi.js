@@ -35,3 +35,10 @@ export const changePassword = async (data) => {
   )
   return response.data
 }
+
+
+// Get Candidate Stats 
+export const getCandidateStats = async () => {
+  const response = await axiosInstance.get('/candidate/stats')
+  return response.data
+}
