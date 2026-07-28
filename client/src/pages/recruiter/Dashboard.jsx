@@ -9,6 +9,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyCompany } from '../../api/companyApi'
 
+import { getRecruiterDashboardStats } from '../../api/jobApi'
+
 // ── Stat Card ──────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, sub, color = 'brand' }) {
   const colors = {
@@ -72,25 +74,34 @@ function CompanyRegistrationPopup({ onRegister, onDismiss }) {
 
 // ── Main Dashboard ─────────────────────────────────────────────
 export default function RecruiterDashboard() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const [showCompanyPopup, setShowCompanyPopup] = useState(false)
+const { user } = useAuth()
+const navigate = useNavigate()
+
+const [showCompanyPopup, setShowCompanyPopup] = useState(false)
+const [dashStats, setDashStats] = useState(null)
 
   // Check if company exists – only once per session
   useEffect(() => {
-    const dismissed = sessionStorage.getItem('company_popup_dismissed')
-    if (dismissed) return
+  const dismissed = sessionStorage.getItem('company_popup_dismissed')
+  if (dismissed) return
 
-    getMyCompany()
-      .then(company => {
-        if (!company) {
-          setShowCompanyPopup(true)
-        }
-      })
-      .catch(() => {
-        // Silent fail – don't block dashboard
-      })
-  }, [])
+  getMyCompany()
+    .then(company => {
+      if (!company) {
+        setShowCompanyPopup(true)
+      }
+    })
+    .catch(() => {
+      // Silent fail – don't block dashboard
+    })
+
+  getRecruiterDashboardStats()
+    .then(setDashStats)
+    .catch(() => {
+      // Silent fail
+    })
+}, [])
+
 
   function handleRegisterNow() {
     setShowCompanyPopup(false)
@@ -103,12 +114,39 @@ export default function RecruiterDashboard() {
   }
 
   // ── Dashboard data ──────────────────────────────────────────
-  const stats = [
-    { icon: Users,     label: 'Total Candidates', value: '0',  sub: 'In the system',          color: 'brand'  },
-    { icon: Search,    label: 'Searches Done',    value: '0',  sub: 'This session',            color: 'purple' },
-    { icon: Bookmark,  label: 'Shortlisted',      value: '0',  sub: 'Saved candidates',        color: 'amber'  },
-    { icon: TrendingUp,label: 'Avg Score',        value: '—',  sub: 'Across shortlisted',      color: 'green'  },
-  ]
+ const stats = [
+  {
+    icon: Users,
+    label: 'Total Candidates',
+    value: dashStats?.total_candidates ?? '—',
+    sub: 'In the system',
+    color: 'brand',
+  },
+  {
+    icon: Search,
+    label: 'Searches Done',
+    value: '—',
+    sub: 'This session',
+    color: 'purple',
+  },
+  {
+    icon: Bookmark,
+    label: 'Shortlisted',
+    value: dashStats?.shortlisted ?? '—',
+    sub: 'Saved candidates',
+    color: 'amber',
+  },
+  {
+    icon: TrendingUp,
+    label: 'Avg Score',
+    value:
+      dashStats?.avg_score != null
+        ? `${dashStats.avg_score}/100`
+        : '—',
+    sub: 'Across shortlisted',
+    color: 'green',
+  },
+]
 
   const actions = [
     {

@@ -81,3 +81,10 @@ export const getRecruiterAnalytics = async () => {
   const response = await axiosInstance.get('/jobs/analytics')
   return response.data
 }
+
+
+// Get analytics for the recruiter's dashboard
+export const getRecruiterDashboardStats = async () => {
+  const response = await axiosInstance.get('/jobs/dashboard-stats')
+  return response.data
+}
