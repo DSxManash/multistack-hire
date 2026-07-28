@@ -7,10 +7,24 @@ import {
 import * as Icons from 'lucide-react'
 
 const {
-  User, Mail, Phone, MapPin, FileText, GitBranch,
-  Share2: Linkedin, Globe, Briefcase, Plus, X, Upload,
-  CheckCircle2, AlertCircle, Loader2, ExternalLink,
-  Save, ShieldAlert
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  GitBranch,
+  Linkedin,
+  Code2,
+  Briefcase,
+  Plus,
+  X,
+  Upload,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ExternalLink,
+  Save,
+  ShieldAlert
 } = Icons
 
 // ── Profile Completion Bar ─────────────────────────────────────
@@ -367,7 +381,7 @@ export default function CandidateProfile() {
 
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-            <Globe className="h-4 w-4 text-brand-600" />
+            <Code2 className="h-4 w-4 text-brand-600" />
             Social Links
             <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-400">
               Required for ML scoring
@@ -402,7 +416,7 @@ export default function CandidateProfile() {
             <div>
               <InputField
                 label="LeetCode Username"
-                icon={Globe}
+                icon={Code2}
                 name="leetcode_username"
                 value={form.leetcode_username}
                 onChange={handleChange}

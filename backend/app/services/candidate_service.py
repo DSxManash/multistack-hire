@@ -31,7 +31,7 @@ class CandidateService:
             years_of_experience=user.years_of_experience,
             skills=skills_list,
             github_username=user.github_username,
-            stackoverflow_username=user.stackoverflow_username,
+            leetcode_username=user.leetcode_username,
             linkedin_url=user.linkedin_url,
             resume_url=user.resume_url,
             resume_uploaded_at=user.resume_uploaded_at,
@@ -68,8 +68,8 @@ class CandidateService:
         if data.github_username is not None:
             user.github_username = data.github_username.strip().lstrip("@")
 
-        if data.stackoverflow_username is not None:
-            user.stackoverflow_username = data.stackoverflow_username.strip()
+        if data.leetcode_username is not None:
+            user.leetcode_username = data.leetcode_username.strip()
 
         if data.linkedin_url is not None:
             user.linkedin_url = data.linkedin_url
@@ -118,7 +118,7 @@ class CandidateService:
     def get_completion(self, user: User) -> ProfileCompletionResponse:
         fields = {
             "GitHub username": user.github_username,
-            "StackOverflow username": user.stackoverflow_username,
+            "LeetCode username": user.leetcode_username,
             "Resume/CV": user.resume_url,
             "Phone number": user.phone_number,
             "Location": user.location,

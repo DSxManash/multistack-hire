@@ -51,7 +51,7 @@ class User(Base):
 
     # ── Social links (critical for ML) ─────────────────────────
     github_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    stackoverflow_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    leetcode_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
     linkedin_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # ── Resume / CV ─────────────────────────────────────────────
@@ -62,7 +62,7 @@ class User(Base):
     ranking_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
   # ── Profile completion ───────────────────────────────────────
-# True when github_username + stackoverflow_username + resume_url all filled
+# True when github_username + leetcode_username + resume_url all filled
     profile_completed: Mapped[bool] = mapped_column(
         Boolean,
         default=False,          # Python default (used by SQLAlchemy)
@@ -106,7 +106,7 @@ class User(Base):
         """Profile is complete when these 3 are filled."""
         return all([
             self.github_username,
-            self.stackoverflow_username,
+            self.leetcode_username,
             self.resume_url,
         ])
 
