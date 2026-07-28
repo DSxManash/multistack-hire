@@ -21,7 +21,17 @@ export const uploadResume = async (file) => {
   return response.data
 }
 
+
+
 export const getProfileCompletion = async () => {
   const response = await axiosInstance.get('/candidate/profile/completion')
+  return response.data
+}
+
+// Change Password API 
+export const changePassword = async (data) => {
+  const response = await axiosInstance.post(
+    '/candidate/settings/change-password', data
+  )
   return response.data
 }
