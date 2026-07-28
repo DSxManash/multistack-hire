@@ -8,6 +8,11 @@ from app.schemas.candidate import ProfileUpdate, ProfileResponse, ProfileComplet
 from app.services.candidate_service import CandidateService
 from fastapi import HTTPException, status
 
+from app.schemas.candidate import (
+    ProfileUpdate, ProfileResponse,
+    ProfileCompletionResponse, ChangePasswordRequest
+)
+
 router = APIRouter()
 
 
@@ -68,3 +73,13 @@ async def get_completion(
     """Get profile completion percentage and missing fields."""
     service = CandidateService(db)
     return service.get_completion(current_user)
+
+@router.post("/settings/change-password")
+async def change_password(
+    data: ChangePasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_candidate),
+):
+    """Change candidate password after verifying current one."""
+    service = CandidateService(db)
+    return await service.change_password(current_user, data)
