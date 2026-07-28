@@ -7,10 +7,24 @@ import {
 import * as Icons from 'lucide-react'
 
 const {
-  User, Mail, Phone, MapPin, FileText, GitBranch,
-  Linkedin, Code2 , Briefcase, Plus, X, Upload,
-  CheckCircle2, AlertCircle, Loader2, ExternalLink,
-  Save, ShieldAlert
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  GitBranch,
+  Linkedin,
+  Code2,
+  Briefcase,
+  Plus,
+  X,
+  Upload,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ExternalLink,
+  Save,
+  ShieldAlert
 } = Icons
 
 // ── Profile Completion Bar ─────────────────────────────────────
