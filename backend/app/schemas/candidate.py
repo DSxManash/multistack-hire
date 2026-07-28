@@ -11,9 +11,8 @@ class ProfileUpdate(BaseModel):
     years_of_experience: Optional[int] = None
     skills: Optional[list[str]] = None
     github_username: Optional[str] = None
-    stackoverflow_username: Optional[str] = None
+    leetcode_username: Optional[str] = None   
     linkedin_url: Optional[str] = None
-
 
 class ProfileResponse(BaseModel):
     id: str
@@ -25,7 +24,7 @@ class ProfileResponse(BaseModel):
     years_of_experience: Optional[int] = None
     skills: list[str] = []
     github_username: Optional[str] = None
-    stackoverflow_username: Optional[str] = None
+    leetcode_username: Optional[str] = None   # ← changed
     linkedin_url: Optional[str] = None
     resume_url: Optional[str] = None
     resume_uploaded_at: Optional[datetime] = None
