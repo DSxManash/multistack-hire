@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import {
-  Users, Brain, BarChart3, ShieldCheck,
-  ArrowRight, CheckCircle2, Clock, AlertCircle
+  Users,
+  Brain,
+  BarChart3,
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react'
+
+import { getAdminStats } from '../../api/adminApi'
 
 function StatCard({ icon: Icon, label, value, sub, color = 'brand' }) {
   const colors = {
@@ -27,13 +35,46 @@ function StatCard({ icon: Icon, label, value, sub, color = 'brand' }) {
 
 export default function AdminDashboard() {
   const { user } = useAuth()
+  const [adminStats, setAdminStats] = useState(null)
 
-  const stats = [
-    { icon: Users,       label: 'Total Users',      value: '0', sub: 'All roles combined',    color: 'brand'  },
-    { icon: Brain,       label: 'Model Status',     value: 'Not trained', sub: 'No model deployed yet', color: 'purple' },
-    { icon: BarChart3,   label: 'Rankings Generated', value: '0', sub: 'Candidates scored',   color: 'green'  },
-    { icon: ShieldCheck, label: 'System Health',    value: 'Good', sub: 'All services running', color: 'amber' },
-  ]
+  useEffect(() => {
+  getAdminStats()
+    .then(setAdminStats)
+    .catch(() => {})
+}, [])
+
+
+// Update stats array:
+const stats = [
+  {
+    icon: Users,
+    label: 'Total Users',
+    value: adminStats?.total_users ?? '—',
+    sub: `${adminStats?.total_candidates ?? 0} candidates, ${adminStats?.total_recruiters ?? 0} recruiters`,
+    color: 'brand',
+  },
+  {
+    icon: Brain,
+    label: 'Model Status',
+    value: 'Not trained',
+    sub: 'No model deployed yet',
+    color: 'purple',
+  },
+  {
+    icon: BarChart3,
+    label: 'Rankings Generated',
+    value: adminStats?.rankings_generated ?? '—',
+    sub: 'Candidates scored',
+    color: 'green',
+  },
+  {
+    icon: ShieldCheck,
+    label: 'System Health',
+    value: 'Good',
+    sub: 'All services running',
+    color: 'amber',
+  },
+]
 
   const systemStatus = [
     { label: 'FastAPI Backend',    status: 'operational', note: 'Running on port 8000'   },
