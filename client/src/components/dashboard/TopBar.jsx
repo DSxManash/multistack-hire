@@ -20,7 +20,6 @@ const pageTitles = {
   '/admin/users': 'User Management',
   '/recruiter/candidates/:id': 'Candidate Details',
   '/admin/model': 'ML Model',
-  '/admin/model/retrain': 'Retrain Model',
   '/admin/analytics': 'System Analytics',
    '/recruiter/jobs': 'Job Postings',
   '/candidate/jobs': 'Browse Jobs',
