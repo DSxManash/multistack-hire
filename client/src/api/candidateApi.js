@@ -42,3 +42,16 @@ export const getCandidateStats = async () => {
   const response = await axiosInstance.get('/candidate/stats')
   return response.data
 }
+
+
+// Get Candidate Ranking Score
+export const getMyRankingScore = async () => {
+  const response = await axiosInstance.get('/ranking/score/me')
+  return response.data
+}
+
+//trigger Candidate Ranking Score with ML Model inference
+export const triggerMyScoring = async () => {
+  const response = await axiosInstance.post('/ranking/score/me')
+  return response.data
+}

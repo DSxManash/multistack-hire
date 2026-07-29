@@ -4,11 +4,21 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getCandidateById } from '../../api/jobApi'
 import {
-  User, Mail, MapPin, Briefcase, Github,
-  Code2, Linkedin, FileText, BarChart3,
-  ArrowLeft, Loader2, AlertCircle, ExternalLink,
-  Calendar, CheckCircle2
-} from 'lucide-react'
+  User,
+  Mail,
+  MapPin,
+  Briefcase,
+  Code2,
+  FileText,
+  BarChart3,
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  ExternalLink,
+  Calendar,
+  CheckCircle2
+} from "lucide-react";
+
 
 export default function CandidateDetails() {
   const { id } = useParams()
@@ -144,7 +154,7 @@ export default function CandidateDetails() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900"
               >
-                <Github className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+               <Code2 className="h-5 w-5 text-slate-700 dark:text-slate-300" />
                 <div>
                   <p className="text-xs font-medium text-slate-900 dark:text-white">
                     GitHub
@@ -157,7 +167,7 @@ export default function CandidateDetails() {
               </a>
             ) : (
               <div className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 opacity-50 dark:border-slate-800">
-                <Github className="h-5 w-5 text-slate-400" />
+                <Code2 className="h-5 w-5 text-slate-400" />
                 <p className="text-xs text-slate-400">GitHub not linked</p>
               </div>
             )}
@@ -194,7 +204,7 @@ export default function CandidateDetails() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900"
               >
-                <Linkedin className="h-5 w-5 text-brand-600" />
+                <Briefcase className="h-5 w-5 text-brand-600" />
                 <div>
                   <p className="text-xs font-medium text-slate-900 dark:text-white">
                     LinkedIn
@@ -207,7 +217,7 @@ export default function CandidateDetails() {
               </a>
             ) : (
               <div className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 opacity-50 dark:border-slate-800">
-                <Linkedin className="h-5 w-5 text-slate-400" />
+                <Briefcase className="h-5 w-5 text-brand-600" />
                 <p className="text-xs text-slate-400">LinkedIn not linked</p>
               </div>
             )}
