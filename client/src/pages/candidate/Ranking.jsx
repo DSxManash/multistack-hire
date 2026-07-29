@@ -1,20 +1,24 @@
-
 import { useState, useEffect } from 'react'
-import { getProfile } from '../../api/candidateApi'
+import { getProfile, getMyRankingScore, triggerMyScoring } from '../../api/candidateApi'
 import { useNavigate } from 'react-router-dom'
 import {
-  BarChart3, Github, Code2, FileText,
-  ArrowRight, Loader2, AlertCircle,
-  TrendingUp, Info, Lock
-} from 'lucide-react'
+  BarChart3,
+  Code2,
+  FileText,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  TrendingUp,
+  Info,
+  Lock,
+  RefreshCw
+} from "lucide-react";
 
-// Score ring component
+// Score ring component (unchanged)
 function ScoreRing({ score }) {
   const radius = 54
   const circumference = 2 * Math.PI * radius
-  const filled = score != null
-    ? (score / 100) * circumference
-    : 0
+  const filled = score != null ? (score / 100) * circumference : 0
 
   const color = score == null ? '#94a3b8'
     : score >= 70 ? '#22c55e'
@@ -24,7 +28,6 @@ function ScoreRing({ score }) {
   return (
     <div className="relative flex items-center justify-center">
       <svg width="140" height="140" className="-rotate-90">
-        {/* Background ring */}
         <circle
           cx="70" cy="70" r={radius}
           fill="none"
@@ -32,7 +35,6 @@ function ScoreRing({ score }) {
           strokeWidth="10"
           className="dark:stroke-slate-800"
         />
-        {/* Score ring */}
         <circle
           cx="70" cy="70" r={radius}
           fill="none"
@@ -43,23 +45,16 @@ function ScoreRing({ score }) {
           style={{ transition: 'stroke-dasharray 0.8s ease' }}
         />
       </svg>
-      {/* Center text */}
       <div className="absolute text-center">
         {score != null ? (
           <>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">
-              {score}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              out of 100
-            </p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white">{score}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">out of 100</p>
           </>
         ) : (
           <>
             <Lock className="mx-auto h-6 w-6 text-slate-400" />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Not scored
-            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Not scored</p>
           </>
         )}
       </div>
@@ -67,7 +62,7 @@ function ScoreRing({ score }) {
   )
 }
 
-// Factor bar component
+// Factor bar component (unchanged)
 function FactorBar({ label, icon: Icon, value, maxValue, color, description }) {
   const percentage = value != null ? Math.min((value / maxValue) * 100, 100) : 0
 
@@ -76,9 +71,7 @@ function FactorBar({ label, icon: Icon, value, maxValue, color, description }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {label}
-          </span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
         </div>
         <span className="text-sm font-semibold text-slate-900 dark:text-white">
           {value != null ? value : '—'}
@@ -92,9 +85,7 @@ function FactorBar({ label, icon: Icon, value, maxValue, color, description }) {
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        {description}
-      </p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
     </div>
   )
 }
@@ -102,15 +93,43 @@ function FactorBar({ label, icon: Icon, value, maxValue, color, description }) {
 export default function CandidateRanking() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
+  const [scoreData, setScoreData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isScoring, setIsScoring] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    getProfile()
-      .then(setProfile)
-      .catch(() => setError('Failed to load ranking data'))
-      .finally(() => setIsLoading(false))
+    async function load() {
+      try {
+        const [profileData, scoreResult] = await Promise.all([
+          getProfile(),
+          getMyRankingScore().catch(() => null),
+        ])
+        setProfile(profileData)
+        setScoreData(scoreResult)
+      } catch {
+        setError('Failed to load ranking data')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
   }, [])
+
+  async function handleTriggerScoring() {
+    setIsScoring(true)
+    try {
+      const result = await triggerMyScoring()
+      setScoreData(result)
+      // Reload profile to get updated ranking_score
+      const updated = await getProfile()
+      setProfile(updated)
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Scoring failed')
+    } finally {
+      setIsScoring(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -129,28 +148,31 @@ export default function CandidateRanking() {
     )
   }
 
-  const score = profile?.ranking_score ?? null
+  const overallScore = scoreData?.ranking_score ?? profile?.ranking_score ?? null
   const hasGithub = !!profile?.github_username
   const hasLeetcode = !!profile?.leetcode_username
   const hasResume = !!profile?.resume_url
   const isReady = hasGithub && hasLeetcode && hasResume
 
-  // Score label
-  const scoreLabel = score == null ? null
-    : score >= 70 ? 'Excellent'
-    : score >= 50 ? 'Good'
-    : score >= 30 ? 'Average'
+  const scoreLabel = overallScore == null ? null
+    : overallScore >= 70 ? 'Excellent'
+    : overallScore >= 50 ? 'Good'
+    : overallScore >= 30 ? 'Average'
     : 'Needs Improvement'
 
-  const scoreLabelColor = score == null ? ''
-    : score >= 70 ? 'text-green-600 dark:text-green-400'
-    : score >= 50 ? 'text-brand-600 dark:text-brand-400'
-    : score >= 30 ? 'text-amber-600 dark:text-amber-400'
+  const scoreLabelColor = overallScore == null ? ''
+    : overallScore >= 70 ? 'text-green-600 dark:text-green-400'
+    : overallScore >= 50 ? 'text-brand-600 dark:text-brand-400'
+    : overallScore >= 30 ? 'text-amber-600 dark:text-amber-400'
     : 'text-red-600 dark:text-red-400'
+
+  // Factor values from SHAP (if available)
+  const githubScore = scoreData?.shap_breakdown?.github ?? null
+  const leetcodeScore = scoreData?.shap_breakdown?.leetcode ?? null
+  const resumeScore = scoreData?.shap_breakdown?.resume ?? null
 
   return (
     <div className="space-y-6 max-w-3xl">
-
       {/* Header */}
       <div>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -200,17 +222,12 @@ export default function CandidateRanking() {
       {/* Score card */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
         <div className="flex flex-col items-center sm:flex-row sm:items-center sm:gap-8">
+          <ScoreRing score={overallScore} />
 
-          {/* Score ring */}
-          <ScoreRing score={score} />
-
-          {/* Score details */}
           <div className="mt-4 sm:mt-0 text-center sm:text-left">
-            {score != null ? (
+            {overallScore != null ? (
               <>
-                <p className={`text-2xl font-bold ${scoreLabelColor}`}>
-                  {scoreLabel}
-                </p>
+                <p className={`text-2xl font-bold ${scoreLabelColor}`}>{scoreLabel}</p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   Your profile ranks in the top tier of candidates
                 </p>
@@ -228,9 +245,8 @@ export default function CandidateRanking() {
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-xs">
                   {isReady
-                    ? 'Your profile is ready. The ML model will score you when you apply to a job.'
-                    : 'Complete your profile with GitHub, LeetCode, and resume to get scored.'
-                  }
+                    ? 'Your profile is ready. Click the button below to get your score.'
+                    : 'Complete your profile with GitHub, LeetCode, and resume to get scored.'}
                 </p>
               </>
             )}
@@ -238,11 +254,35 @@ export default function CandidateRanking() {
         </div>
       </div>
 
-      {/* Score breakdown */}
+      {/* "Get My Score" button (after score card) */}
+      {isReady && (
+        <div className="flex justify-center">
+          <button
+            onClick={handleTriggerScoring}
+            disabled={isScoring}
+            className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {isScoring ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Calculating Score...
+              </>
+            ) : (
+              <>
+                <BarChart3 className="h-4 w-4" />
+                {profile?.ranking_score != null ? 'Recalculate Score' : 'Get My Score'}
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+
+      {/* Factor bars (detailed breakdown) — kept for additional context */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
         <div className="flex items-center gap-2 mb-4">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Score Breakdown
+            Factor Contributions
           </h3>
           <div className="group relative">
             <Info className="h-4 w-4 text-slate-400 cursor-help" />
@@ -251,48 +291,47 @@ export default function CandidateRanking() {
             </div>
           </div>
         </div>
-
         <div className="space-y-5">
           <FactorBar
             label="GitHub Activity"
-            icon={Github}
-            value={profile?.github_username ? null : null}
+            icon={Code2}
+            value={githubScore}
             maxValue={100}
             color="text-slate-700 dark:text-slate-300"
             description={
-              profile?.github_username
-                ? `@${profile.github_username} — data fetched on scoring`
+              hasGithub
+                ? `@${profile.github_username} — ${githubScore != null ? 'scored' : 'not yet scored'}`
                 : 'Add GitHub username to your profile'
             }
           />
           <FactorBar
             label="LeetCode Performance"
             icon={Code2}
-            value={profile?.leetcode_username ? null : null}
+            value={leetcodeScore}
             maxValue={100}
             color="text-amber-600 dark:text-amber-400"
             description={
-              profile?.leetcode_username
-                ? `@${profile.leetcode_username} — data fetched on scoring`
+              hasLeetcode
+                ? `@${profile.leetcode_username} — ${leetcodeScore != null ? 'scored' : 'not yet scored'}`
                 : 'Add LeetCode username to your profile'
             }
           />
           <FactorBar
             label="Resume Quality"
             icon={FileText}
-            value={profile?.resume_url ? null : null}
+            value={resumeScore}
             maxValue={100}
             color="text-brand-600 dark:text-brand-400"
             description={
-              profile?.resume_url
-                ? 'Resume uploaded — parsed on scoring'
+              hasResume
+                ? `Resume uploaded — ${resumeScore != null ? 'parsed and scored' : 'not yet scored'}`
                 : 'Upload your resume to get this factor scored'
             }
           />
           <FactorBar
             label="Overall Score"
             icon={BarChart3}
-            value={score}
+            value={overallScore}
             maxValue={100}
             color="text-green-600 dark:text-green-400"
             description="Final weighted score from XGBoost model"
@@ -308,7 +347,7 @@ export default function CandidateRanking() {
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             {
-              icon: Github,
+              icon: Code2,
               label: 'GitHub Analysis',
               desc: 'Repos, stars, commits, languages, and contribution frequency',
               color: 'bg-slate-50 dark:bg-slate-900',
@@ -326,10 +365,7 @@ export default function CandidateRanking() {
               color: 'bg-brand-50 dark:bg-brand-950/30',
             },
           ].map(item => (
-            <div
-              key={item.label}
-              className={`rounded-lg p-4 ${item.color}`}
-            >
+            <div key={item.label} className={`rounded-lg p-4 ${item.color}`}>
               <item.icon className="h-5 w-5 text-slate-600 dark:text-slate-400 mb-2" strokeWidth={1.75} />
               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
                 {item.label}
@@ -341,21 +377,6 @@ export default function CandidateRanking() {
           ))}
         </div>
       </div>
-
-      {/* Where real data plugs in — comment for developer */}
-      {/*
-        ML INTEGRATION POINTS (Day 2-3):
-        1. Add shap_values JSON column to users table
-        2. After scoring runs, update:
-           - users.ranking_score = final_score
-           - users.shap_values = { github: X, leetcode: Y, resume: Z }
-        3. Update getProfile() response to include shap_values
-        4. In FactorBar components, replace null values with:
-           - profile.shap_values?.github
-           - profile.shap_values?.leetcode
-           - profile.shap_values?.resume
-        5. The ScoreRing will auto-populate when ranking_score is set
-      */}
     </div>
   )
 }

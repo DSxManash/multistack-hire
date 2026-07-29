@@ -2,9 +2,16 @@
 
 import { useState } from 'react'
 import {
-  Brain, Play, RefreshCw, CheckCircle2,
-  AlertCircle, Clock, Info, BarChart3,
-  Github, Code2, FileText
+  Brain,
+  Play,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Info,
+  BarChart3,
+  Code2,
+  FileText
 } from 'lucide-react'
 
 export default function ModelManagement() {
@@ -32,11 +39,11 @@ export default function ModelManagement() {
 
   const pipeline = [
     {
-      icon: Github,
-      label: 'GitHub API',
-      desc: 'Fetches repos, stars, commits, languages',
-      status: 'ready',
-    },
+  icon: Brain,
+  label: 'GitHub API',
+  desc: 'Fetches repos, stars, commits, languages',
+  status: 'ready',
+},
     {
       icon: Code2,
       label: 'LeetCode API',
@@ -55,12 +62,7 @@ export default function ModelManagement() {
       desc: 'Predicts candidate suitability score (0-100)',
       status: 'pending',
     },
-    {
-      icon: Brain,
-      label: 'SHAP Explainer',
-      desc: 'Explains score breakdown per feature',
-      status: 'pending',
-    },
+    
   ]
 
   return (

@@ -1,4 +1,3 @@
-// client/src/components/dashboard/TopBar.jsx
 
 import { Menu, Sun, Moon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'

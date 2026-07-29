@@ -70,6 +70,14 @@ class User(Base):
         nullable=False
 )
 
+
+        # ── ML Data ─────────────────────────────────────────────────────
+    github_data: Mapped[str | None] = mapped_column(Text, nullable=True)
+    leetcode_data: Mapped[str | None] = mapped_column(Text, nullable=True)      
+    resume_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shap_values: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_scored_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     # ── Relationships ────────────────────────────────────────────
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         "RefreshToken", back_populates="user",
