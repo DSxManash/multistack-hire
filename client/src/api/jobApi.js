@@ -88,3 +88,9 @@ export const getRecruiterDashboardStats = async () => {
   const response = await axiosInstance.get('/jobs/dashboard-stats')
   return response.data
 }
+
+// Get ranked applicants for a specific job
+export const getRankedApplicants = async (jobId) => {
+  const response = await axiosInstance.get(`/ranking/job/${jobId}`)
+  return response.data
+}
