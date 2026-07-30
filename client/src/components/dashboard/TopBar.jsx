@@ -1,41 +1,94 @@
+// client/src/components/dashboard/TopBar.jsx
 
-import { Menu, Sun, Moon } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
+import { useAuth } from '../../hooks/useAuth'
+import {
+  Menu, Sun, Moon, LogOut, ChevronDown,
+  User, Settings, Building2, BarChart3,
+  Users, Brain
+} from 'lucide-react'
 
-
-// Map route paths to human-readable page titles
 const pageTitles = {
-  '/candidate/dashboard': 'Dashboard',
-  '/candidate/profile': 'My Profile',
-  '/candidate/resume': 'Resume Upload',
-  '/candidate/ranking': 'My Ranking',
-  '/candidate/settings': 'Settings',
-  '/recruiter/dashboard': 'Dashboard',
-  '/recruiter/search': 'Candidate Search',
-  '/recruiter/shortlist': 'Shortlist',
-  '/recruiter/analytics': 'Analytics',
-  '/admin/dashboard': 'Dashboard',
-  '/admin/users': 'User Management',
-  '/recruiter/candidates/:id': 'Candidate Details',
-  '/admin/model': 'ML Model',
-  '/admin/analytics': 'System Analytics',
-   '/recruiter/jobs': 'Job Postings',
-  '/candidate/jobs': 'Browse Jobs',
-  '/recruiter/company': 'Company Profile',
+  '/candidate/dashboard':  'Dashboard',
+  '/candidate/profile':    'My Profile',
+  '/candidate/resume':     'Resume Upload',
+  '/candidate/ranking':    'My Ranking',
+  '/candidate/settings':   'Settings',
+  '/candidate/jobs':       'Browse Jobs',
+  '/recruiter/dashboard':  'Dashboard',
+  '/recruiter/jobs':       'Job Postings',
+  '/recruiter/company':    'Company Profile',
+  '/recruiter/search':     'Candidate Search',
+  '/recruiter/shortlist':  'Shortlist',
+  '/recruiter/analytics':  'Analytics',
+  '/admin/dashboard':      'Dashboard',
+  '/admin/users':          'User Management',
+  '/admin/model':          'ML Model',
+  '/admin/model/retrain':  'Retrain Model',
+  '/admin/analytics':      'System Analytics',
+}
 
+// Role-specific dropdown menu items
+const roleMenuItems = {
+  candidate: [
+    { label: 'My Profile',  icon: User,     path: '/candidate/profile' },
+    { label: 'Settings',    icon: Settings,  path: '/candidate/settings' },
+  ],
+  recruiter: [
+    { label: 'Company',    icon: Building2, path: '/recruiter/company' },
+    { label: 'Analytics',  icon: BarChart3,  path: '/recruiter/analytics' },
+  ],
+  admin: [
+    { label: 'User Management', icon: Users,  path: '/admin/users' },
+    { label: 'ML Model',        icon: Brain,  path: '/admin/model' },
+  ],
+}
+
+const roleBadgeColor = {
+  admin:     'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
+  recruiter: 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-400',
+  candidate: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400',
 }
 
 export default function TopBar({ onOpenMobile }) {
   const location = useLocation()
+  const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
+  const { user, logout } = useAuth()
+
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef(null)
 
   const pageTitle = pageTitles[location.pathname] ?? 'Dashboard'
+  const menuItems = roleMenuItems[user?.role] ?? []
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  function handleNavigate(path) {
+    setDropdownOpen(false)
+    navigate(path)
+  }
+
+  function handleLogout() {
+    setDropdownOpen(false)
+    logout()
+  }
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
 
-      {/* Left — hamburger (mobile) + page title */}
+      {/* Left — hamburger + page title */}
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobile}
@@ -44,14 +97,15 @@ export default function TopBar({ onOpenMobile }) {
         >
           <Menu className="h-5 w-5" />
         </button>
-
         <h1 className="text-base font-semibold text-slate-900 dark:text-white">
           {pageTitle}
         </h1>
       </div>
 
-      {/* Right — theme toggle */}
+      {/* Right — theme toggle + user dropdown */}
       <div className="flex items-center gap-2">
+
+        {/* Theme toggle */}
         <button
           onClick={toggleTheme}
           aria-label="Toggle theme"
@@ -62,7 +116,76 @@ export default function TopBar({ onOpenMobile }) {
             : <Moon className="h-4 w-4" />
           }
         </button>
+
+        {/* User dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setDropdownOpen(prev => !prev)}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 py-1.5 pl-1.5 pr-3 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+          >
+            {/* Avatar */}
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+              {user?.full_name?.charAt(0).toUpperCase() ?? '?'}
+            </div>
+            {/* Name — hidden on mobile */}
+            <span className="hidden text-sm font-medium text-slate-700 dark:text-slate-300 sm:block max-w-[120px] truncate">
+              {user?.full_name?.split(' ')[0]}
+            </span>
+            <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Dropdown menu */}
+          {dropdownOpen && (
+            <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+
+              {/* User info header */}
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
+                    {user?.full_name?.charAt(0).toUpperCase() ?? '?'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      {user?.full_name}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+                <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${roleBadgeColor[user?.role]}`}>
+                  {user?.role}
+                </span>
+              </div>
+
+              {/* Role-specific menu items */}
+              <div className="py-1.5">
+                {menuItems.map(item => (
+                  <button
+                    key={item.path}
+                    onClick={() => handleNavigate(item.path)}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    <item.icon className="h-4 w-4 text-slate-400" />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Logout */}
+              <div className="border-t border-slate-100 py-1.5 dark:border-slate-800">
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )
-} 
+}
