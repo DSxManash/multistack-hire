@@ -1,5 +1,5 @@
-
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'        // <-- added
 import { searchCandidates } from '../../api/jobApi'
 import {
   Search, Users, Mail, Calendar,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 
 export default function CandidateSearch() {
+  const navigate = useNavigate()                      // <-- added
   const [candidates, setCandidates] = useState([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -20,7 +21,6 @@ export default function CandidateSearch() {
   }, [])
 
   // Debounced search — waits 400ms after user stops typing
-  // prevents firing an API call on every keystroke
   useEffect(() => {
     if (search === '') {
       searchCandidates().then(setCandidates)
@@ -87,7 +87,8 @@ export default function CandidateSearch() {
           {candidates.map((candidate) => (
             <div
               key={candidate.id}
-              className="rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-sm dark:border-slate-800 dark:bg-slate-950"
+              onClick={() => navigate(`/recruiter/candidates/${candidate.id}`)}
+              className="cursor-pointer rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-sm dark:border-slate-800 dark:bg-slate-950"
             >
               {/* Avatar + name */}
               <div className="flex items-center gap-3">

@@ -2,14 +2,13 @@
 import { useState, useEffect } from 'react'
 
 import {
-  createJob, getMyJobs, closeJob, getJobApplications, updateApplicationStatus
+  createJob, getMyJobs, closeJob, getJobApplications, updateApplicationStatus , getRankedApplicants
 } from '../../api/jobApi'
 import {
   Plus, Briefcase, MapPin, Users, Calendar,
   X, Loader2, CheckCircle2, AlertCircle,
   ChevronRight, Trash2
 } from 'lucide-react'
-
 
 
 const jobTypeLabel = {
@@ -178,108 +177,29 @@ function PostJobModal({ onClose, onSuccess }) {
 }
 
 
-
-// // ── Applications Panel ────────────────────────────────────────────
-// function ApplicationsPanel({ job, onClose }) {
-//   const [applications, setApplications] = useState([])
-//   const [isLoading, setIsLoading] = useState(true)
-
-//   useEffect(() => {
-//     getJobApplications(job.id)
-//       .then(setApplications)
-//       .finally(() => setIsLoading(false))
-//   }, [job.id])
-
-//   return (
-//     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40">
-//       <div className="h-full w-full max-w-md overflow-y-auto border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-
-//         {/* Header */}
-//         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-//           <div>
-//             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-//               Applications
-//             </h2>
-//             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-//               {job.title}
-//             </p>
-//           </div>
-//           <button
-//             onClick={onClose}
-//             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-//           >
-//             <X className="h-4 w-4" />
-//           </button>
-//         </div>
-
-//         {/* Application list */}
-//         <div className="p-6">
-//           {isLoading ? (
-//             <div className="flex justify-center py-12">
-//               <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
-//             </div>
-//           ) : applications.length === 0 ? (
-//             <div className="py-12 text-center">
-//               <Users className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
-//               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-//                 No applications yet
-//               </p>
-//             </div>
-//           ) : (
-//             <div className="space-y-3">
-//               {applications.map((app) => (
-//                 <div
-//                   key={app.id}
-//                   className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"
-//                 >
-//                   <div className="flex items-center justify-between">
-//                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
-//                       C
-//                     </div>
-//                     <span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusColors[app.status]}`}>
-//                       {app.status}
-//                     </span>
-//                   </div>
-//                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-//                     Candidate ID: {app.candidate_id.slice(0, 8)}...
-//                   </p>
-//                   <p className="mt-1 text-xs text-slate-400">
-//                     Applied {new Date(app.applied_at).toLocaleDateString('en-US', {
-//                       month: 'short', day: 'numeric', year: 'numeric'
-//                     })}
-//                   </p>
-//                 </div>
-//               ))}
-//             </div>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-// Replace ApplicationsPanel with this version
-
 function ApplicationsPanel({ job, onClose }) {
   const [applications, setApplications] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState(null)
 
   useEffect(() => {
-    getJobApplications(job.id)
-      .then(setApplications)
+    getRankedApplicants(job.id)
+      .then(data => setApplications(data.applicants ?? []))
+      .catch(() => getJobApplications(job.id).then(setApplications))
       .finally(() => setIsLoading(false))
   }, [job.id])
 
   async function handleStatusChange(applicationId, newStatus) {
     setUpdatingId(applicationId)
     try {
-      const updated = await updateApplicationStatus(applicationId, newStatus)
+      await updateApplicationStatus(applicationId, newStatus)
       setApplications(prev =>
-        prev.map(a => a.id === applicationId ? { ...a, status: updated.status } : a)
+        prev.map(a => a.application_id === applicationId
+          ? { ...a, status: newStatus }
+          : a
+        )
       )
     } catch {
-      // silent fail for now
     } finally {
       setUpdatingId(null)
     }
@@ -295,26 +215,20 @@ function ApplicationsPanel({ job, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40">
       <div className="h-full w-full max-w-md overflow-y-auto border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Applications
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {job.title} · {applications.length} applicant{applications.length !== 1 ? 's' : ''}
+              {job.title} · {applications.length} applicant{applications.length !== 1 ? 's' : ''} · ranked by AI score
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Application list */}
         <div className="p-5 space-y-3">
           {isLoading ? (
             <div className="flex justify-center py-12">
@@ -323,75 +237,97 @@ function ApplicationsPanel({ job, onClose }) {
           ) : applications.length === 0 ? (
             <div className="py-12 text-center">
               <Users className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                No applications yet
-              </p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">No applications yet</p>
             </div>
           ) : (
-            applications.map((app) => (
-              <div
-                key={app.id}
-                className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"
-              >
-                {/* Candidate info */}
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
-                    {app.candidate?.full_name?.charAt(0).toUpperCase() ?? '?'}
+            applications.map((app, index) => {
+              const candidate = app.candidate ?? app
+              const appId = app.application_id ?? app.id
+              const status = app.status
+              const score = candidate.ranking_score
+
+              return (
+                <div key={appId} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                  {/* Rank + candidate */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      #{index + 1}
+                    </div>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
+                      {candidate.full_name?.charAt(0).toUpperCase() ?? '?'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        {candidate.full_name ?? 'Unknown'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {candidate.email ?? '—'}
+                      </p>
+                    </div>
+                    {/* AI Score badge */}
+                    {score != null ? (
+                      <div className="shrink-0 text-center">
+                        <p className={`text-sm font-bold ${
+                          score >= 70 ? 'text-green-600 dark:text-green-400'
+                          : score >= 40 ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-red-500'
+                        }`}>
+                          {score}
+                        </p>
+                        <p className="text-xs text-slate-400">AI Score</p>
+                      </div>
+                    ) : (
+                      <div className="shrink-0 text-center">
+                        <p className="text-xs text-slate-400">Not scored</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      {app.candidate?.full_name ?? 'Unknown'}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                      {app.candidate?.email ?? '—'}
+
+                  {/* Status */}
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusColors[status]}`}>
+                      {status}
+                    </span>
+                    <p className="text-xs text-slate-400">
+                      {new Date(app.applied_at).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric'
+                      })}
                     </p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusColors[app.status]}`}>
-                    {app.status}
-                  </span>
+
+                  {/* Actions */}
+                  {status !== 'shortlisted' && status !== 'rejected' && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => handleStatusChange(appId, 'shortlisted')}
+                        disabled={updatingId === appId}
+                        className="flex-1 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50 dark:bg-green-950 dark:text-green-400"
+                      >
+                        {updatingId === appId ? '...' : 'Shortlist'}
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(appId, 'rejected')}
+                        disabled={updatingId === appId}
+                        className="flex-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 dark:bg-red-950 dark:text-red-400"
+                      >
+                        {updatingId === appId ? '...' : 'Reject'}
+                      </button>
+                    </div>
+                  )}
+                  {(status === 'shortlisted' || status === 'rejected') && (
+                    <p className="mt-2 text-xs text-slate-400 italic">Decision made</p>
+                  )}
                 </div>
-
-                {/* Applied date */}
-                <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                  Applied {new Date(app.applied_at).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric'
-                  })}
-                </p>
-
-                {/* Action buttons */}
-                {app.status !== 'shortlisted' && app.status !== 'rejected' && (
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => handleStatusChange(app.id, 'shortlisted')}
-                      disabled={updatingId === app.id}
-                      className="flex-1 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50 dark:bg-green-950 dark:text-green-400"
-                    >
-                      {updatingId === app.id ? '...' : 'Shortlist'}
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(app.id, 'rejected')}
-                      disabled={updatingId === app.id}
-                      className="flex-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 dark:bg-red-950 dark:text-red-400"
-                    >
-                      {updatingId === app.id ? '...' : 'Reject'}
-                    </button>
-                  </div>
-                )}
-
-                {/* Already actioned */}
-                {(app.status === 'shortlisted' || app.status === 'rejected') && (
-                  <p className="mt-2 text-xs text-slate-400 italic">
-                    Decision made — status locked
-                  </p>
-                )}
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>
     </div>
   )
 }
+
+
 
 // ── Main Page ─────────────────────────────────────────────────────
 export default function RecruiterJobs() {
