@@ -1,11 +1,11 @@
 // client/src/components/dashboard/Sidebar.jsx
 
-import { NavLink } from 'react-router-dom'          // useNavigate removed
-import { Layers, ChevronLeft, ChevronRight } from 'lucide-react'   // LogOut removed
+import { NavLink } from 'react-router-dom'         
+import { Layers, ChevronLeft, ChevronRight } from 'lucide-react'   
 import { useAuth } from '../../hooks/useAuth'
 
 export default function Sidebar({ navItems, isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile }) {
-  const { user } = useAuth()    // logout removed
+  const { user } = useAuth()    
 
   // Role badge color per role
   const roleBadge = {
