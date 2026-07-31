@@ -11,17 +11,16 @@ import {
 // ----- Import all icons as a namespace -----
 import * as Icons from 'lucide-react'
 
-// Destructure with a fallback if missing
+// Destructure with fallbacks – if the export is missing, use a simple span/emoji
 const {
   BarChart3 = () => <span>📊</span>,
-  Github = () => <span>🐙</span>,          // fallback if export missing
+  Github = () => <span>🐙</span>,
   Code2 = () => <span>⚡</span>,
   FileText = () => <span>📄</span>,
   ArrowRight = () => <span>→</span>,
   Loader2 = () => <span>⏳</span>,
   AlertCircle = () => <span>⚠️</span>,
   TrendingUp = () => <span>📈</span>,
-  Info = () => <span>ℹ️</span>,
   Lock = () => <span>🔒</span>,
   RefreshCw = () => <span>🔄</span>,
   CheckCircle2 = () => <span>✅</span>,
@@ -52,19 +51,13 @@ function ScoreRing({ score }) {
       <div className="absolute text-center">
         {score != null ? (
           <>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">
-              {score}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              out of 100
-            </p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white">{score}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">out of 100</p>
           </>
         ) : (
           <>
             <Lock className="mx-auto h-6 w-6 text-slate-400" />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Not scored
-            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Not scored</p>
           </>
         )}
       </div>
@@ -82,25 +75,19 @@ function FactorBar({ label, icon: Icon, value, color, description }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <IconComponent className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {label}
-          </span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
         </div>
         <span className="text-sm font-semibold text-slate-900 dark:text-white">
-          {value != null ? `${Math.round(value)}/100` : '—'}
+          {value != null ? `${Math.round(value)}/35` : '—'}
         </span>
       </div>
       <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800">
         <div
-          className={`h-2 rounded-full transition-all duration-700 ${
-            value != null ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'
-          }`}
-          style={{ width: value != null ? `${Math.min(value, 100)}%` : '0%' }}
+          className={`h-2 rounded-full transition-all duration-700 ${value != null ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+          style={{ width: value != null ? `${Math.min((value / 35) * 100, 100)}%` : '0%' }}
         />
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        {description || ''}
-      </p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
     </div>
   )
 }
@@ -177,27 +164,18 @@ export default function CandidateRanking() {
     : score >= 30 ? 'text-amber-600 dark:text-amber-400'
     : 'text-red-600 dark:text-red-400'
 
-  // Safely get breakdown values
-  const githubScore = scoreData?.shap_breakdown?.github ?? null
-  const leetcodeScore = scoreData?.shap_breakdown?.leetcode ?? null
-  const resumeScore = scoreData?.shap_breakdown?.resume ?? null
-  const profileScore = scoreData?.shap_breakdown?.profile ?? null
+  const shap = scoreData?.shap_breakdown ?? null
 
   return (
     <div className="space-y-6 max-w-3xl">
 
-      {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          My Ranking Score
-        </h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">My Ranking Score</h2>
         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-          AI-powered evaluation based on GitHub activity,
-          LeetCode performance, and resume quality
+          AI-powered evaluation based on GitHub, LeetCode, and resume analysis
         </p>
       </div>
 
-      {/* Success */}
       {successMsg && (
         <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -205,7 +183,6 @@ export default function CandidateRanking() {
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -213,7 +190,6 @@ export default function CandidateRanking() {
         </div>
       )}
 
-      {/* Profile incomplete warning */}
       {!isReady && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
           <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
@@ -222,25 +198,13 @@ export default function CandidateRanking() {
               Complete your profile to get scored
             </p>
             <div className="mt-2 space-y-1">
-              {!hasGithub && (
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  ✗ GitHub username not set
-                </p>
-              )}
-              {!hasLeetcode && (
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  ✗ LeetCode username not set
-                </p>
-              )}
-              {!hasResume && (
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  ✗ Resume not uploaded
-                </p>
-              )}
+              {!hasGithub && <p className="text-xs text-amber-700 dark:text-amber-400">✗ GitHub username not set</p>}
+              {!hasLeetcode && <p className="text-xs text-amber-700 dark:text-amber-400">✗ LeetCode username not set</p>}
+              {!hasResume && <p className="text-xs text-amber-700 dark:text-amber-400">✗ Resume not uploaded</p>}
             </div>
             <button
               onClick={() => navigate('/candidate/profile')}
-              className="mt-3 flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 dark:text-amber-400"
+              className="mt-3 flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400"
             >
               Complete Profile <ArrowRight className="h-3.5 w-3.5" />
             </button>
@@ -248,23 +212,20 @@ export default function CandidateRanking() {
         </div>
       )}
 
-      {/* Score card */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
         <div className="flex flex-col items-center sm:flex-row sm:gap-8">
           <ScoreRing score={score} />
           <div className="mt-4 sm:mt-0 text-center sm:text-left flex-1">
             {score != null ? (
               <>
-                <p className={`text-2xl font-bold ${scoreLabelColor}`}>
-                  {scoreLabel}
-                </p>
+                <p className={`text-2xl font-bold ${scoreLabelColor}`}>{scoreLabel}</p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   Your AI-generated candidate score
                 </p>
                 <div className="mt-2 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-green-500" />
                   <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                    Powered by XGBoost ML model
+                    Scored by XGBoost ML model
                   </span>
                 </div>
                 {profile?.last_scored_at && (
@@ -280,34 +241,25 @@ export default function CandidateRanking() {
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-xs">
                   {isReady
-                    ? 'Click Calculate My Score to generate your AI ranking.'
-                    : 'Complete your profile with GitHub, LeetCode, and resume.'}
+                    ? 'Your profile is complete. Click the button to calculate your AI ranking score.'
+                    : 'Complete your profile with GitHub, LeetCode, and resume first.'
+                  }
                 </p>
               </>
             )}
 
-            {/* Calculate Score Button */}
             {isReady && (
               <button
                 onClick={handleTriggerScoring}
                 disabled={isScoring}
-                className="mt-4 flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                className="mt-4 flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isScoring ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Calculating...
-                  </>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Calculating...</>
                 ) : score != null ? (
-                  <>
-                    <RefreshCw className="h-4 w-4" />
-                    Recalculate Score
-                  </>
+                  <><RefreshCw className="h-4 w-4" /> Recalculate Score</>
                 ) : (
-                  <>
-                    <BarChart3 className="h-4 w-4" />
-                    Calculate My Score
-                  </>
+                  <><BarChart3 className="h-4 w-4" /> Calculate My Score</>
                 )}
               </button>
             )}
@@ -315,69 +267,39 @@ export default function CandidateRanking() {
         </div>
       </div>
 
-      {/* Detailed breakdown with FactorBars */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Score Breakdown
-          </h3>
-          <div className="group relative">
-            <Info className="h-4 w-4 text-slate-400 cursor-help" />
-            <div className="absolute left-6 top-0 z-10 hidden w-48 rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-600 shadow-sm group-hover:block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-              Scores are calculated by XGBoost ML model using SHAP values
-            </div>
+      {shap && (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Score Breakdown</h3>
+          <div className="space-y-4">
+            <FactorBar
+              label="GitHub Activity"
+              icon={Github}
+              value={shap.github}
+              color="text-slate-700 dark:text-slate-300"
+              description="Followers, repos, language diversity, account age"
+            />
+            <FactorBar
+              label="LeetCode Performance"
+              icon={Code2}
+              value={shap.leetcode}
+              color="text-amber-600 dark:text-amber-400"
+              description="Easy, medium, hard problems solved"
+            />
+            <FactorBar
+              label="Resume / CV"
+              icon={FileText}
+              value={shap.cv}
+              color="text-brand-600 dark:text-brand-400"
+              description="Skills, projects, internships, certifications, CGPA"
+            />
           </div>
         </div>
-        <div className="space-y-5">
-          <FactorBar
-            label="GitHub Activity"
-            icon={Github}
-            value={githubScore}
-            color="text-slate-700 dark:text-slate-300"
-            description={
-              hasGithub
-                ? `@${profile.github_username} — ${githubScore != null ? 'scored' : 'not yet scored'}`
-                : 'Add GitHub username to your profile'
-            }
-          />
-          <FactorBar
-            label="LeetCode Performance"
-            icon={Code2}
-            value={leetcodeScore}
-            color="text-amber-600 dark:text-amber-400"
-            description={
-              hasLeetcode
-                ? `@${profile.leetcode_username} — ${leetcodeScore != null ? 'scored' : 'not yet scored'}`
-                : 'Add LeetCode username to your profile'
-            }
-          />
-          <FactorBar
-            label="Resume Quality"
-            icon={FileText}
-            value={resumeScore}
-            color="text-brand-600 dark:text-brand-400"
-            description={
-              hasResume
-                ? `Resume uploaded — ${resumeScore != null ? 'parsed and scored' : 'not yet scored'}`
-                : 'Upload your resume to get this factor scored'
-            }
-          />
-          <FactorBar
-            label="Profile Completeness"
-            icon={TrendingUp}
-            value={profileScore}
-            color="text-green-600 dark:text-green-400"
-            description="Years of experience and profile data quality"
-          />
-        </div>
-      </div>
+      )}
 
-      {/* GitHub data summary */}
       {scoreData?.github_data && Object.keys(scoreData.github_data).length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <Github className="h-4 w-4" />
-            GitHub Summary
+            <Github className="h-4 w-4" /> GitHub Summary
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
@@ -387,24 +309,18 @@ export default function CandidateRanking() {
               { label: 'Languages', value: scoreData.github_data.language_count },
             ].map(s => (
               <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">
-                  {s.value ?? '—'}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {s.label}
-                </p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* LeetCode data summary */}
       {scoreData?.leetcode_data && Object.keys(scoreData.leetcode_data).length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-amber-600" />
-            LeetCode Summary
+            <Code2 className="h-4 w-4 text-amber-600" /> LeetCode Summary
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
@@ -414,52 +330,48 @@ export default function CandidateRanking() {
               { label: 'Hard', value: scoreData.leetcode_data.hard_solved },
             ].map(s => (
               <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">
-                  {s.value ?? '—'}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {s.label}
-                </p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* How it works */}
+      {scoreData?.cv_features && (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-brand-600" /> Resume Analysis
+          </h3>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[
+              { label: 'Skills', value: scoreData.cv_features.cv_skills },
+              { label: 'Projects', value: scoreData.cv_features.cv_projects },
+              { label: 'Internships', value: scoreData.cv_features.cv_internships },
+              { label: 'Certifications', value: scoreData.cv_features.cv_certifications },
+              { label: 'CGPA', value: scoreData.cv_features.cv_cgpa },
+            ].map(s => (
+              <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-          How Scoring Works
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">How Scoring Works</h3>
         <div className="grid gap-3 sm:grid-cols-3">
           {[
-            {
-              icon: Github,
-              label: 'GitHub (35%)',
-              desc: 'Repos, stars, followers, languages, recent activity',
-              color: 'bg-slate-50 dark:bg-slate-900',
-            },
-            {
-              icon: Code2,
-              label: 'LeetCode (35%)',
-              desc: 'Problems solved by difficulty, weighted score',
-              color: 'bg-amber-50 dark:bg-amber-950/30',
-            },
-            {
-              icon: FileText,
-              label: 'Resume (30%)',
-              desc: 'Skills, experience, education parsed by AI',
-              color: 'bg-brand-50 dark:bg-brand-950/30',
-            },
+            { icon: Github, label: 'GitHub (35%)', desc: 'Followers, repos, language diversity, account age', color: 'bg-slate-50 dark:bg-slate-900' },
+            { icon: Code2, label: 'LeetCode (35%)', desc: 'Easy, medium, hard problems solved and weighted', color: 'bg-amber-50 dark:bg-amber-950/30' },
+            { icon: FileText, label: 'Resume (30%)', desc: 'Skills, projects, internships, certifications, CGPA', color: 'bg-brand-50 dark:bg-brand-950/30' },
           ].map(item => (
             <div key={item.label} className={`rounded-lg p-4 ${item.color}`}>
               <item.icon className="h-5 w-5 text-slate-600 dark:text-slate-400 mb-2" strokeWidth={1.75} />
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                {item.label}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                {item.desc}
-              </p>
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">{item.label}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>

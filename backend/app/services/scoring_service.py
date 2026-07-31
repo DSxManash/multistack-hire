@@ -1,90 +1,102 @@
 # backend/app/services/scoring_service.py
 
-import json
+import os
+import joblib
 import numpy as np
-from datetime import datetime
 
+# ── Load model once at startup ────────────────────────────────────
+_MODEL_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "ml",
+    "candidate_ranking_model_final.pkl"
+)
 
-def _normalize(value: float, max_value: float) -> float:
-    """Normalize a value to 0-1 range."""
-    if max_value == 0:
-        return 0.0
-    return min(float(value) / max_value, 1.0)
+try:
+    _MODEL = joblib.load(_MODEL_PATH)
+    print(f"[scoring_service] Model loaded from {_MODEL_PATH}")
+except Exception as e:
+    _MODEL = None
+    print(f"[scoring_service] WARNING: Could not load model: {e}")
 
 
 def build_feature_vector(
     github_data: dict,
     leetcode_data: dict,
-    resume_data: dict,
-    profile_data: dict,
+    cv_features: dict,
 ) -> np.ndarray:
     """
-    Build normalized feature vector from all data sources.
-    Each feature is normalized to 0-1 range.
+    Build feature vector matching EXACT training feature order:
 
-    Feature weights (for rule-based scoring):
-      GitHub:   35% of total score
-      LeetCode: 35% of total score
-      Resume:   20% of total score
-      Profile:  10% of total score
+    github_followers, github_public_repos, github_language_diversity,
+    github_account_age_days, leetcode_easy_solved, leetcode_medium_solved,
+    leetcode_hard_solved, cv_skills, cv_projects, cv_internships,
+    cv_certifications, cv_cgpa
     """
     features = [
-        # GitHub features (35%)
-        _normalize(github_data.get("public_repos", 0), 100),
-        _normalize(github_data.get("total_stars", 0), 500),
-        _normalize(github_data.get("followers", 0), 200),
-        _normalize(github_data.get("quality_repos", 0), 50),
-        _normalize(github_data.get("recent_repos", 0), 20),
-        _normalize(github_data.get("language_count", 0), 10),
-        _normalize(github_data.get("account_age_days", 0), 3650),
+        # GitHub (4 features)
+        float(github_data.get("followers", 0)),
+        float(github_data.get("public_repos", 0)),
+        float(github_data.get("language_count", 0)),   
+        float(github_data.get("account_age_days", 0)),
 
-        # LeetCode features (35%)
-        _normalize(leetcode_data.get("total_solved", 0), 500),
-        _normalize(leetcode_data.get("hard_solved", 0), 100),
-        _normalize(leetcode_data.get("medium_solved", 0), 200),
-        _normalize(leetcode_data.get("weighted_score", 0), 1000),
+        # LeetCode (3 features)
+        float(leetcode_data.get("easy_solved", 0)),
+        float(leetcode_data.get("medium_solved", 0)),
+        float(leetcode_data.get("hard_solved", 0)),
 
-        # Resume features (20%)
-        _normalize(resume_data.get("skills_count", 0), 20),
-        _normalize(resume_data.get("experience_years", 0), 15),
-        float(resume_data.get("has_degree", False)),
-
-        # Profile features (10%)
-        _normalize(profile_data.get("years_of_experience", 0), 20),
+        # CV features (5 features) — from your team's cv_processor
+        float(cv_features.get("cv_skills", 0)),
+        float(cv_features.get("cv_projects", 0)),
+        float(cv_features.get("cv_internships", 0)),
+        float(cv_features.get("cv_certifications", 0)),
+        float(cv_features.get("cv_cgpa", 0.0)),
     ]
 
-    return np.array(features, dtype=np.float32)
+    return np.array(features, dtype=np.float32).reshape(1, -1)
 
 
-def calculate_score(feature_vector: np.ndarray) -> tuple[float, dict]:
+def calculate_score(
+    github_data: dict,
+    leetcode_data: dict,
+    cv_features: dict,
+) -> tuple[float, dict]:
     """
-    Calculate candidate score using weighted formula.
-    Returns (score, shap_breakdown) tuple.
-
-    When XGBoost model is trained:
-      Replace this function body with:
-        model = xgboost.load_model("model.json")
-        score = float(model.predict(feature_vector.reshape(1, -1))[0])
-        explainer = shap.TreeExplainer(model)
-        shap_vals = explainer.shap_values(feature_vector.reshape(1, -1))
+    Predict candidate score using trained XGBoost model.
+    Returns (score, breakdown) tuple.
+    Score is 0-100.
     """
-    f = feature_vector
+    feature_vector = build_feature_vector(github_data, leetcode_data, cv_features)
 
-    # Weighted scoring formula
-    github_score = float(np.mean(f[0:7])) * 35      # 35% weight
-    leetcode_score = float(np.mean(f[7:11])) * 35   # 35% weight
-    resume_score = float(np.mean(f[11:14])) * 20    # 20% weight
-    profile_score = float(np.mean(f[14:15])) * 10   # 10% weight
+    if _MODEL is not None:
+        # Use real trained model
+        raw_score = float(_MODEL.predict(feature_vector)[0])
+        # Clamp to 0-100
+        final_score = round(min(max(raw_score, 0.0), 100.0), 1)
+    else:
+        # Fallback rule-based if model failed to load
+        f = feature_vector[0]
+        github_score  = min(f[0]/200 + f[1]/100 + f[2]/10 + f[3]/3650, 1.0) * 35
+        leetcode_score = min(f[4]/300 + f[5]/200 + f[6]/100, 1.0) * 35
+        cv_score = min(f[7]/20 + f[8]/10 + f[9]/5 + f[10]/5 + f[11]/4, 1.0) * 30
+        final_score = round(github_score + leetcode_score + cv_score, 1)
 
-    total_score = github_score + leetcode_score + resume_score + profile_score
-    final_score = round(min(total_score, 100), 1)
-
-    # SHAP-style breakdown (contribution of each source)
-    shap_breakdown = {
-        "github": round(github_score, 1),
-        "leetcode": round(leetcode_score, 1),
-        "resume": round(resume_score, 1),
-        "profile": round(profile_score, 1),
+    # Score breakdown for UI display
+    breakdown = {
+        "github": round(min(
+            (github_data.get("followers", 0)/200 +
+             github_data.get("public_repos", 0)/100 +
+             github_data.get("language_count", 0)/10) / 3 * 35, 35
+        ), 1),
+        "leetcode": round(min(
+            (leetcode_data.get("easy_solved", 0)/300 +
+             leetcode_data.get("medium_solved", 0)/200 +
+             leetcode_data.get("hard_solved", 0)/100) / 3 * 35, 35
+        ), 1),
+        "cv": round(min(
+            (cv_features.get("cv_skills", 0)/20 +
+             cv_features.get("cv_projects", 0)/10 +
+             cv_features.get("cv_cgpa", 0)/4) / 3 * 30, 30
+        ), 1),
     }
 
-    return final_score, shap_breakdown
+    return final_score, breakdown

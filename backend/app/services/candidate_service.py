@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+from app.models.user import User
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +13,28 @@ from app.schemas.candidate import (
     ChangePasswordRequest,
 )
 from app.utils.minio_client import upload_resume, get_resume_url
+
+
+# ── Helper functions for username extraction ──
+def extract_github_username(value: str) -> str:
+    value = value.strip()
+    if "github.com/" in value:
+        value = value.rstrip("/")
+        value = value.split("/")[-1]
+    return value.lstrip("@")
+
+
+def extract_leetcode_username(value: str) -> str:
+    value = value.strip()
+    if "leetcode.com" in value:
+        value = value.rstrip("/")
+        parts = value.split("/")
+        if "u" in parts:
+            idx = parts.index("u")
+            if idx + 1 < len(parts):
+                return parts[idx + 1]
+        return parts[-1]
+    return value
 
 
 class CandidateService:
@@ -65,11 +88,12 @@ class CandidateService:
         if data.skills is not None:
             user.set_skills(data.skills)
 
+        # ── Updated username handling ──
         if data.github_username is not None:
-            user.github_username = data.github_username.strip().lstrip("@")
+            user.github_username = extract_github_username(data.github_username)
 
         if data.leetcode_username is not None:
-            user.leetcode_username = data.leetcode_username.strip()
+            user.leetcode_username = extract_leetcode_username(data.leetcode_username)
 
         if data.linkedin_url is not None:
             user.linkedin_url = data.linkedin_url
@@ -77,7 +101,7 @@ class CandidateService:
         user.profile_completed = user.check_profile_completed()
         user.updated_at = datetime.utcnow()
 
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(user)
 
         return await self.get_profile(user)
@@ -110,7 +134,7 @@ class CandidateService:
         user.profile_completed = user.check_profile_completed()
         user.updated_at = datetime.utcnow()
 
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(user)
 
         return await self.get_profile(user)
@@ -168,7 +192,7 @@ class CandidateService:
         user.password_hash = hash_password(data.new_password)
         user.updated_at = datetime.utcnow()
 
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(user)
 
         return {"message": "Password changed successfully"}
