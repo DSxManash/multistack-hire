@@ -7,11 +7,9 @@ import {
   getMyRankingScore,
   triggerMyScoring
 } from '../../api/candidateApi'
-
-// ----- Import all icons as a namespace -----
 import * as Icons from 'lucide-react'
 
-// Destructure with fallbacks – if the export is missing, use a simple span/emoji
+// Fallback icons
 const {
   BarChart3 = () => <span>📊</span>,
   Github = () => <span>🐙</span>,
@@ -26,7 +24,7 @@ const {
   CheckCircle2 = () => <span>✅</span>,
 } = Icons
 
-// ── Score Ring ─────────────────────────────────────────────────
+// ── Score Ring ────────────────────────────────────────────────
 function ScoreRing({ score }) {
   const radius = 54
   const circumference = 2 * Math.PI * radius
@@ -38,6 +36,9 @@ function ScoreRing({ score }) {
 
   return (
     <div className="relative flex items-center justify-center">
+      {score != null && (
+        <div className="absolute inset-0 animate-ping rounded-full border-4 border-brand-500/20" />
+      )}
       <svg width="140" height="140" className="-rotate-90">
         <circle cx="70" cy="70" r={radius} fill="none"
           stroke="#e2e8f0" strokeWidth="10"
@@ -65,10 +66,10 @@ function ScoreRing({ score }) {
   )
 }
 
-// ── Factor Bar ─────────────────────────────────────────────────
+// ── Factor Bar ────────────────────────────────────────────────
 function FactorBar({ label, icon: Icon, value, color, description }) {
-  // Ensure Icon is a valid component; fallback to a simple span
   const IconComponent = typeof Icon === 'function' ? Icon : () => <span className="h-4 w-4 text-slate-400">•</span>
+  const fillPercentage = value != null ? Math.min((value / 35) * 100, 100) : 0
 
   return (
     <div className="space-y-1.5">
@@ -83,8 +84,8 @@ function FactorBar({ label, icon: Icon, value, color, description }) {
       </div>
       <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800">
         <div
-          className={`h-2 rounded-full transition-all duration-700 ${value != null ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`}
-          style={{ width: value != null ? `${Math.min((value / 35) * 100, 100)}%` : '0%' }}
+          className="h-2 rounded-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all duration-700"
+          style={{ width: `${fillPercentage}%` }}
         />
       </div>
       <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
@@ -167,31 +168,32 @@ export default function CandidateRanking() {
   const shap = scoreData?.shap_breakdown ?? null
 
   return (
-    <div className="space-y-6 max-w-3xl">
-
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">My Ranking Score</h2>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Ranking Score</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           AI-powered evaluation based on GitHub, LeetCode, and resume analysis
         </p>
       </div>
 
+      {/* Toast messages */}
       {successMsg && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400 animate-slideDown">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {successMsg}
         </div>
       )}
-
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400 animate-slideDown">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
+      {/* Profile incomplete warning */}
       {!isReady && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 dark:border-amber-900 dark:from-amber-950/30 dark:to-orange-950/30">
           <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
@@ -204,7 +206,7 @@ export default function CandidateRanking() {
             </div>
             <button
               onClick={() => navigate('/candidate/profile')}
-              className="mt-3 flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400"
+              className="mt-3 flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
             >
               Complete Profile <ArrowRight className="h-3.5 w-3.5" />
             </button>
@@ -212,13 +214,19 @@ export default function CandidateRanking() {
         </div>
       )}
 
+      {/* Main Score Card – full width with grid */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
-        <div className="flex flex-col items-center sm:flex-row sm:gap-8">
-          <ScoreRing score={score} />
-          <div className="mt-4 sm:mt-0 text-center sm:text-left flex-1">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Left: Score Ring */}
+          <div className="flex flex-col items-center justify-center lg:items-start">
+            <ScoreRing score={score} />
+          </div>
+
+          {/* Right: Info + Button */}
+          <div className="flex flex-col justify-center">
             {score != null ? (
               <>
-                <p className={`text-2xl font-bold ${scoreLabelColor}`}>{scoreLabel}</p>
+                <p className={`text-3xl font-bold ${scoreLabelColor}`}>{scoreLabel}</p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   Your AI-generated candidate score
                 </p>
@@ -236,14 +244,13 @@ export default function CandidateRanking() {
               </>
             ) : (
               <>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">
                   {isReady ? 'Ready to Score' : 'Score Not Available'}
                 </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-xs">
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {isReady
                     ? 'Your profile is complete. Click the button to calculate your AI ranking score.'
-                    : 'Complete your profile with GitHub, LeetCode, and resume first.'
-                  }
+                    : 'Complete your profile with GitHub, LeetCode, and resume first.'}
                 </p>
               </>
             )}
@@ -252,7 +259,7 @@ export default function CandidateRanking() {
               <button
                 onClick={handleTriggerScoring}
                 disabled={isScoring}
-                className="mt-4 flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="mt-4 flex w-fit items-center gap-2 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md hover:from-brand-700 hover:to-brand-600 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
               >
                 {isScoring ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Calculating...</>
@@ -267,10 +274,11 @@ export default function CandidateRanking() {
         </div>
       </div>
 
+      {/* Breakdown – using full width with side‑by‑side bars */}
       {shap && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Score Breakdown</h3>
-          <div className="space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Score Breakdown</h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <FactorBar
               label="GitHub Activity"
               icon={Github}
@@ -296,47 +304,50 @@ export default function CandidateRanking() {
         </div>
       )}
 
-      {scoreData?.github_data && Object.keys(scoreData.github_data).length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <Github className="h-4 w-4" /> GitHub Summary
-          </h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: 'Public Repos', value: scoreData.github_data.public_repos },
-              { label: 'Total Stars', value: scoreData.github_data.total_stars },
-              { label: 'Followers', value: scoreData.github_data.followers },
-              { label: 'Languages', value: scoreData.github_data.language_count },
-            ].map(s => (
-              <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
-              </div>
-            ))}
+      {/* Summaries – grid with 2 or 3 columns */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {scoreData?.github_data && Object.keys(scoreData.github_data).length > 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <Github className="h-4 w-4" /> GitHub Summary
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Public Repos', value: scoreData.github_data.public_repos },
+                { label: 'Total Stars', value: scoreData.github_data.total_stars },
+                { label: 'Followers', value: scoreData.github_data.followers },
+                { label: 'Languages', value: scoreData.github_data.language_count },
+              ].map(s => (
+                <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {scoreData?.leetcode_data && Object.keys(scoreData.leetcode_data).length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-amber-600" /> LeetCode Summary
-          </h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: 'Total Solved', value: scoreData.leetcode_data.total_solved },
-              { label: 'Easy', value: scoreData.leetcode_data.easy_solved },
-              { label: 'Medium', value: scoreData.leetcode_data.medium_solved },
-              { label: 'Hard', value: scoreData.leetcode_data.hard_solved },
-            ].map(s => (
-              <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
-              </div>
-            ))}
+        {scoreData?.leetcode_data && Object.keys(scoreData.leetcode_data).length > 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <Code2 className="h-4 w-4 text-amber-600" /> LeetCode Summary
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Total Solved', value: scoreData.leetcode_data.total_solved },
+                { label: 'Easy', value: scoreData.leetcode_data.easy_solved },
+                { label: 'Medium', value: scoreData.leetcode_data.medium_solved },
+                { label: 'Hard', value: scoreData.leetcode_data.hard_solved },
+              ].map(s => (
+                <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {scoreData?.cv_features && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
@@ -360,15 +371,16 @@ export default function CandidateRanking() {
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">How Scoring Works</h3>
-        <div className="grid gap-3 sm:grid-cols-3">
+      {/* How Scoring Works – full width with three cards */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">How Scoring Works</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             { icon: Github, label: 'GitHub (35%)', desc: 'Followers, repos, language diversity, account age', color: 'bg-slate-50 dark:bg-slate-900' },
             { icon: Code2, label: 'LeetCode (35%)', desc: 'Easy, medium, hard problems solved and weighted', color: 'bg-amber-50 dark:bg-amber-950/30' },
             { icon: FileText, label: 'Resume (30%)', desc: 'Skills, projects, internships, certifications, CGPA', color: 'bg-brand-50 dark:bg-brand-950/30' },
           ].map(item => (
-            <div key={item.label} className={`rounded-lg p-4 ${item.color}`}>
+            <div key={item.label} className={`rounded-lg p-4 transition-all hover:-translate-y-1 hover:shadow-md ${item.color}`}>
               <item.icon className="h-5 w-5 text-slate-600 dark:text-slate-400 mb-2" strokeWidth={1.75} />
               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">{item.label}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>

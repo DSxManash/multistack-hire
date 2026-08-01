@@ -12,6 +12,7 @@ import CandidateLayout from '../layouts/CandidateLayout'
 import LandingPage from '../pages/public/LandingPage'
 import LoginPage from '../pages/public/LoginPage'
 import RegisterPage from '../pages/public/RegisterPage'
+import AdminLoginPage from '../pages/public/AdminLoginPage'
 import AboutPage from '../pages/public/AboutPage'
 
 import AdminDashboard from '../pages/admin/Dashboard'
@@ -28,7 +29,6 @@ import Analytics from '../pages/recruiter/Analytics'
 import CandidateDashboard from '../pages/candidate/Dashboard'
 import CandidateJobs from '../pages/candidate/Jobs'
 import Profile from '../pages/candidate/Profile'
-import ResumeUpload from '../pages/candidate/ResumeUpload'
 import Ranking from '../pages/candidate/Ranking'
 import Settings from '../pages/candidate/Settings'
 import RecruiterCompany from '../pages/recruiter/Company'
@@ -65,6 +65,14 @@ export default function AppRoutes() {
             : <RegisterPage />}
         />
       </Route>
+      <Route
+        path="/admin/login"
+        element={
+          isAuthenticated && user?.role === 'admin'
+            ? <Navigate to="/admin/dashboard" replace />
+            : <AdminLoginPage />
+        }
+      />
 
       {/* Protected */}
       <Route element={<ProtectedRoute />}>
@@ -99,7 +107,6 @@ export default function AppRoutes() {
             <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
             <Route path="/candidate/jobs" element={<CandidateJobs />} />
             <Route path="/candidate/profile" element={<Profile />} />
-            <Route path="/candidate/resume" element={<ResumeUpload />} />
             <Route path="/candidate/ranking" element={<Ranking />} />
             <Route path="/candidate/settings" element={<Settings />} />
           </Route>

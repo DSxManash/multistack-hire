@@ -6,7 +6,7 @@ import { fadeUp } from './motion'
 export default function CTA() {
   return (
     <section className="relative py-20 sm:py-28 overflow-hidden dark:bg-slate-950">
-      
+
       {/* Decorative ambient spots */}
       <div className="absolute top-0 left-1/4 -z-10 h-72 w-72 rounded-full bg-brand-500/10 blur-3xl dark:bg-brand-500/5" />
       <div className="absolute bottom-0 right-1/4 -z-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/5" />
@@ -25,7 +25,7 @@ export default function CTA() {
           <div className="absolute bottom-0 left-0 h-40 w-40 rounded-full bg-blue-400/20 blur-2xl dark:bg-blue-500/10" />
 
           <div className="relative z-10">
-            
+
             {/* Sparkles tag */}
             <div className="mx-auto mb-6 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-white/90 dark:bg-brand-950/80 dark:text-brand-300">
               <Sparkles className="h-3.5 w-3.5 text-brand-200 dark:text-brand-400" />

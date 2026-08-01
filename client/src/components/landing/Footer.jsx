@@ -10,6 +10,7 @@ const footerLinks = {
   Account: [
     { label: 'Login', href: '/login' },
     { label: 'Register', href: '/register' },
+    { label: 'Admin Login', href: '/admin/login' },
     { label: 'Get Started', href: '/register' },
   ],
   Project: [
@@ -24,7 +25,7 @@ export default function Footer() {
     <footer className="border-t border-slate-200 bg-white dark:border-slate-800/85 dark:bg-slate-950">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
-          
+
           {/* Logo and research desc */}
           <div className="sm:col-span-2 lg:col-span-1">
             <a href="#home" className="group flex items-center gap-2.5">

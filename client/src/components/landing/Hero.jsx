@@ -56,14 +56,14 @@ export default function Hero() {
     <section id="home" className="relative overflow-hidden pt-28 pb-20 sm:pt-36 sm:pb-32 dark:bg-slate-950">
       {/* Decorative Gradients */}
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-50 via-white to-white dark:from-slate-900/30 dark:via-slate-950 dark:to-slate-950" />
-      
+
       {/* Soft ambient background lights */}
       <div className="absolute top-0 right-1/4 -z-10 h-72 w-72 rounded-full bg-brand-400/10 blur-3xl dark:bg-brand-500/5" />
       <div className="absolute bottom-10 left-1/4 -z-10 h-80 w-80 rounded-full bg-blue-400/10 blur-3xl dark:bg-blue-500/5" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
-          
+
           {/* Headline and Description (Left Column) */}
           <div className="text-center lg:col-span-6 lg:text-left">
             <motion.div
@@ -97,8 +97,8 @@ export default function Hero() {
               variants={fadeUp}
               className="mt-6 text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-400"
             >
-              Multistack Hire evaluates software engineering talent by blending 
-              real-time <strong>GitHub</strong> commits, <strong>LeetCode</strong> algorithmic performance, 
+              Multistack Hire evaluates software engineering talent by blending
+              real-time <strong>GitHub</strong> commits, <strong>LeetCode</strong> algorithmic performance,
               and <strong>CV analytics</strong> into a unified XGBoost machine learning pipeline. Stop guess-hiring and start relying on transparent, data-driven suitability metrics.
             </motion.p>
 
@@ -151,7 +151,7 @@ export default function Hero() {
 
               {/* Main inner grid */}
               <div className="grid gap-5 sm:grid-cols-12">
-                
+
                 {/* Candidates List Column */}
                 <div className="space-y-3 sm:col-span-6">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider dark:text-slate-500">
@@ -162,11 +162,10 @@ export default function Hero() {
                       <button
                         key={cand.name}
                         onClick={() => setSelectedCandidate(idx)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-300 ${
-                          selectedCandidate === idx
+                        className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-300 ${selectedCandidate === idx
                             ? 'border-brand-500 bg-brand-50/50 shadow-sm dark:border-brand-500/50 dark:bg-brand-950/20'
                             : 'border-slate-100 hover:border-slate-200 bg-transparent dark:border-slate-800/60 dark:hover:border-slate-700'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <div className={`h-8 w-8 rounded-full ${cand.avatarColor} flex items-center justify-center text-white text-xs font-bold`}>
@@ -212,11 +211,11 @@ export default function Hero() {
                             Rank #{selectedCandidate + 1}
                           </span>
                         </div>
-                        
+
                         <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
                           {mockCandidates[selectedCandidate].name}
                         </p>
-                        
+
                         <div className="mt-3.5 space-y-2.5">
                           {/* GitHub stat */}
                           <div>
