@@ -28,14 +28,14 @@ export default function MLSection() {
 
   return (
     <section id="about" className="relative py-20 sm:py-28 overflow-hidden dark:bg-slate-950">
-      
+
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 right-0 -z-10 h-96 w-96 rounded-full bg-brand-400/5 blur-3xl dark:bg-brand-500/5" />
       <div className="absolute bottom-1/4 left-0 -z-10 h-96 w-96 rounded-full bg-violet-400/5 blur-3xl dark:bg-violet-500/5" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-stretch gap-12 lg:grid-cols-12 lg:gap-16">
-          
+
           {/* Information Side (Left) */}
           <div className="flex flex-col justify-center lg:col-span-6">
             <motion.div
@@ -102,26 +102,24 @@ export default function MLSection() {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Tabs */}
                 <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1 dark:bg-slate-950">
                   <button
                     onClick={() => setActiveTab('importance')}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${
-                      activeTab === 'importance'
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${activeTab === 'importance'
                         ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
                         : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     Feature Importance
                   </button>
                   <button
                     onClick={() => setActiveTab('pipeline')}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${
-                      activeTab === 'pipeline'
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${activeTab === 'pipeline'
                         ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
                         : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     Pipeline Layers
                   </button>

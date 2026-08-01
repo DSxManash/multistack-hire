@@ -1,7 +1,5 @@
-// client/src/components/dashboard/TopBar.jsx
-
 import { useState, useRef, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../hooks/useAuth'
 import {
@@ -28,9 +26,9 @@ const pageTitles = {
   '/admin/model':          'ML Model',
   '/admin/model/retrain':  'Retrain Model',
   '/admin/analytics':      'System Analytics',
+  '/admin/login': 'Admin Login',
 }
 
-// Role-specific dropdown menu items
 const roleMenuItems = {
   candidate: [
     { label: 'My Profile',  icon: User,     path: '/candidate/profile' },
@@ -64,7 +62,6 @@ export default function TopBar({ onOpenMobile }) {
   const pageTitle = pageTitles[location.pathname] ?? 'Dashboard'
   const menuItems = roleMenuItems[user?.role] ?? []
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -75,9 +72,8 @@ export default function TopBar({ onOpenMobile }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  function handleNavigate(path) {
+  function handleCloseDropdown() {
     setDropdownOpen(false)
-    navigate(path)
   }
 
   function handleLogout() {
@@ -86,9 +82,7 @@ export default function TopBar({ onOpenMobile }) {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
-
-      {/* Left — hamburger + page title */}
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80">
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobile}
@@ -97,51 +91,44 @@ export default function TopBar({ onOpenMobile }) {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <h1 className="text-base font-semibold text-slate-900 dark:text-white">
+        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
           {pageTitle}
         </h1>
       </div>
 
-      {/* Right — theme toggle + user dropdown */}
       <div className="flex items-center gap-2">
-
-        {/* Theme toggle */}
         <button
           onClick={toggleTheme}
           aria-label="Toggle theme"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-brand-200 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-brand-800 dark:hover:text-brand-500"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-all hover:border-brand-300 hover:text-brand-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:text-brand-400"
         >
-          {theme === 'dark'
-            ? <Sun className="h-4 w-4" />
-            : <Moon className="h-4 w-4" />
-          }
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
 
-        {/* User dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
+            type="button"
             onClick={() => setDropdownOpen(prev => !prev)}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 py-1.5 pl-1.5 pr-3 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 py-1.5 pl-1.5 pr-3 transition-all hover:border-brand-300 hover:shadow-sm dark:border-slate-700 dark:hover:border-brand-700"
           >
-            {/* Avatar */}
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white shadow">
               {user?.full_name?.charAt(0).toUpperCase() ?? '?'}
             </div>
-            {/* Name — hidden on mobile */}
             <span className="hidden text-sm font-medium text-slate-700 dark:text-slate-300 sm:block max-w-[120px] truncate">
               {user?.full_name?.split(' ')[0]}
+            </span>
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
             </span>
             <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
-          {/* Dropdown menu */}
           {dropdownOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
-
-              {/* User info header */}
+            <div className="absolute right-0 top-full z-[9999] mt-2 w-56 min-w-[14rem] overflow-visible rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white shadow">
                     {user?.full_name?.charAt(0).toUpperCase() ?? '?'}
                   </div>
                   <div className="min-w-0">
@@ -157,26 +144,23 @@ export default function TopBar({ onOpenMobile }) {
                   {user?.role}
                 </span>
               </div>
-
-              {/* Role-specific menu items */}
               <div className="py-1.5">
                 {menuItems.map(item => (
-                  <button
+                  <Link
                     key={item.path}
-                    onClick={() => handleNavigate(item.path)}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                    to={item.path}
+                    onClick={handleCloseDropdown}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     <item.icon className="h-4 w-4 text-slate-400" />
                     {item.label}
-                  </button>
+                  </Link>
                 ))}
               </div>
-
-              {/* Logout */}
               <div className="border-t border-slate-100 py-1.5 dark:border-slate-800">
                 <button
                   onClick={handleLogout}
-                  className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign out

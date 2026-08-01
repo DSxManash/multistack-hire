@@ -1,3 +1,5 @@
+// client/src/pages/candidate/Profile.jsx
+
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
@@ -27,47 +29,67 @@ const {
   ShieldAlert
 } = Icons
 
+function normalizeGithubUsername(value) {
+  if (!value) return ''
+  const trimmed = value.trim()
+  if (trimmed.includes('github.com/')) {
+    return trimmed.replace(/.*github\.com\//, '').replace(/\/+$/, '')
+  }
+  return trimmed.replace(/^@/, '')
+}
+
+function normalizeLeetcodeUsername(value) {
+  if (!value) return ''
+  const trimmed = value.trim()
+  if (trimmed.includes('leetcode.com')) {
+    const cleaned = trimmed.replace(/.*leetcode\.com\//, '').replace(/\/+$/, '')
+    return cleaned.startsWith('u/') ? cleaned.slice(2) : cleaned
+  }
+  return trimmed
+}
+
 // ── Profile Completion Bar ─────────────────────────────────────
 function CompletionBar({ percentage, missing }) {
-  const color = percentage === 100
-    ? 'bg-green-500'
-    : percentage >= 60
-    ? 'bg-brand-600'
-    : 'bg-amber-500'
+  const steps = ['Personal', 'Social', 'Skills', 'Resume']
+  const completedSteps = Math.floor(percentage / 25) // 0-4
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-      <div className="flex items-center justify-between mb-2">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
           Profile Completion
         </h3>
         <span className={`text-sm font-bold ${
-          percentage === 100
-            ? 'text-green-600'
-            : percentage >= 60
-            ? 'text-brand-600'
-            : 'text-amber-600'
+          percentage === 100 ? 'text-green-600' : percentage >= 60 ? 'text-brand-600' : 'text-amber-600'
         }`}>
           {percentage}%
         </span>
       </div>
-      <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-        <div
-          className={`h-2 rounded-full transition-all duration-500 ${color}`}
-          style={{ width: `${percentage}%` }}
-        />
+      {/* Step indicators */}
+      <div className="flex items-center gap-1 mb-4">
+        {steps.map((label, idx) => {
+          const isComplete = idx < completedSteps
+          const isCurrent = idx === completedSteps && percentage < 100
+          return (
+            <div key={label} className="flex-1 flex items-center gap-1">
+              <div className={`flex-1 h-1.5 rounded-full transition-colors ${
+                isComplete ? 'bg-green-500' : isCurrent ? 'bg-brand-500' : 'bg-slate-200 dark:bg-slate-700'
+              }`} />
+              <span className={`text-[10px] font-medium whitespace-nowrap ${
+                isComplete ? 'text-green-600' : isCurrent ? 'text-brand-600' : 'text-slate-400'
+              }`}>
+                {label}
+              </span>
+            </div>
+          )
+        })}
       </div>
       {missing.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-            Missing fields:
-          </p>
+        <div className="mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Missing fields:</p>
           <div className="flex flex-wrap gap-1.5">
-            {missing.map((field) => (
-              <span
-                key={field}
-                className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-              >
+            {missing.map(field => (
+              <span key={field} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
                 {field}
               </span>
             ))}
@@ -148,7 +170,7 @@ function InputField({ label, icon: Icon, required, ...props }) {
         )}
         <input
           {...props}
-          className={`w-full rounded-lg border border-slate-200 bg-white py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500 ${Icon ? 'pl-10 pr-4' : 'px-4'}`}
+          className={`w-full rounded-lg border border-slate-200 bg-white py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500 ${Icon ? 'pl-10 pr-4' : 'px-4'}`}
         />
       </div>
     </div>
@@ -232,7 +254,7 @@ export default function CandidateProfile() {
       setProfile(updated)
       const completionData = await getProfileCompletion()
       setCompletion(completionData)
-      setSuccessMsg(' Profile saved successfully!')
+      setSuccessMsg('Profile saved successfully!')
       setTimeout(() => setSuccessMsg(null), 3000)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to save profile')
@@ -251,7 +273,7 @@ export default function CandidateProfile() {
       setProfile(updated)
       const completionData = await getProfileCompletion()
       setCompletion(completionData)
-      setSuccessMsg(' Resume uploaded successfully!')
+      setSuccessMsg('Resume uploaded successfully!')
       setTimeout(() => setSuccessMsg(null), 3000)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to upload resume')
@@ -269,15 +291,23 @@ export default function CandidateProfile() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
-
-      {/*  Success Toast Popup (fixed top‑right) */}
+    <div className="space-y-6">
+      {/* Success Toast Snackbar - fixed bottom right */}
       {successMsg && (
-        <div className="fixed top-5 right-5 z-50 rounded-lg bg-green-600 px-5 py-3 text-white shadow-xl animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg bg-green-600 px-5 py-3 text-white shadow-xl animate-slideUp">
           {successMsg}
         </div>
       )}
 
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Profile</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Manage your personal information and resume
+        </p>
+      </div>
+
+      {/* Completion Bar */}
       {completion && (
         <CompletionBar
           percentage={completion.percentage}
@@ -285,6 +315,7 @@ export default function CandidateProfile() {
         />
       )}
 
+      {/* From Apply Warning */}
       {fromApply && (
         <div className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 dark:border-brand-900 dark:bg-brand-950/30">
           <ShieldAlert className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400 mt-0.5" />
@@ -299,154 +330,160 @@ export default function CandidateProfile() {
         </div>
       )}
 
+      {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400 animate-slideDown">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
-        {/* ... rest of the form unchanged ... */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <User className="h-4 w-4 text-brand-600" />
-            Personal Information
-          </h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Full Name
-              </label>
-              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900">
-                <User className="h-4 w-4 text-slate-400" />
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {user?.full_name}
-                </span>
+        {/* Two-column layout for Personal and Social */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Personal Information */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <User className="h-4 w-4 text-brand-600" />
+              Personal Information
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Full Name
+                </label>
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900">
+                  <User className="h-4 w-4 text-slate-400" />
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {user?.full_name}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Email
+                </label>
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900">
+                  <Mail className="h-4 w-4 text-slate-400" />
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {user?.email}
+                  </span>
+                </div>
+              </div>
+              <InputField
+                label="Phone Number"
+                icon={Phone}
+                name="phone_number"
+                value={form.phone_number}
+                onChange={handleChange}
+                placeholder="+977 98XXXXXXXX"
+              />
+              <InputField
+                label="Location"
+                icon={MapPin}
+                name="location"
+                value={form.location}
+                onChange={handleChange}
+                placeholder="Kathmandu, Nepal"
+              />
+              <InputField
+                label="Years of Experience"
+                icon={Briefcase}
+                name="years_of_experience"
+                type="number"
+                min="0"
+                max="50"
+                value={form.years_of_experience}
+                onChange={handleChange}
+                placeholder="e.g. 3"
+              />
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={form.bio}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Brief description about yourself..."
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
+                />
               </div>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Email
-              </label>
-              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900">
-                <Mail className="h-4 w-4 text-slate-400" />
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {user?.email}
-                </span>
-              </div>
-            </div>
-            <InputField
-              label="Phone Number"
-              icon={Phone}
-              name="phone_number"
-              value={form.phone_number}
-              onChange={handleChange}
-              placeholder="+977 98XXXXXXXX"
-            />
-            <InputField
-              label="Location"
-              icon={MapPin}
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              placeholder="Kathmandu, Nepal"
-            />
-            <InputField
-              label="Years of Experience"
-              icon={Briefcase}
-              name="years_of_experience"
-              type="number"
-              min="0"
-              max="50"
-              value={form.years_of_experience}
-              onChange={handleChange}
-              placeholder="e.g. 3"
-            />
           </div>
-          <div className="mt-4">
-            <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Bio
-            </label>
-            <textarea
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Brief description about yourself..."
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
-            />
+
+          {/* Social Links */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+              <Code2 className="h-4 w-4 text-brand-600" />
+              Social Links
+              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-400">
+                Required for ML scoring
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              These are used by the AI ranking engine to evaluate your technical profile.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <InputField
+                  label="GitHub Username"
+                  icon={GitBranch}
+                  name="github_username"
+                  value={form.github_username}
+                  onChange={handleChange}
+                  placeholder="e.g. octocat"
+                  required
+                />
+                {form.github_username && (
+                  <a
+                    href={'https://github.com/' + normalizeGithubUsername(form.github_username)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 flex items-center gap-1 text-xs text-brand-600 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    View GitHub profile
+                  </a>
+                )}
+              </div>
+              <div>
+                <InputField
+                  label="LeetCode Username"
+                  icon={Code2}
+                  name="leetcode_username"
+                  value={form.leetcode_username}
+                  onChange={handleChange}
+                  placeholder="e.g. 1234567/username"
+                  required
+                />
+                {form.leetcode_username && (
+                  <a
+                    href={'https://leetcode.com/' + normalizeLeetcodeUsername(form.leetcode_username)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 flex items-center gap-1 text-xs text-brand-600 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    View LeetCode profile
+                  </a>
+                )}
+              </div>
+              <InputField
+                label="LinkedIn URL"
+                icon={Linkedin}
+                name="linkedin_url"
+                value={form.linkedin_url}
+                onChange={handleChange}
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-brand-600" />
-            Social Links
-            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-400">
-              Required for ML scoring
-            </span>
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            These are used by the AI ranking engine to evaluate your technical profile.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <InputField
-                label="GitHub Username"
-                icon={GitBranch}
-                name="github_username"
-                value={form.github_username}
-                onChange={handleChange}
-                placeholder="e.g. octocat"
-                required
-              />
-              {form.github_username && (
-                <a
-                  href={'https://github.com/' + form.github_username}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 flex items-center gap-1 text-xs text-brand-600 hover:underline"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  View GitHub profile
-                </a>
-              )}
-            </div>
-            <div>
-              <InputField
-                label="LeetCode Username"
-                icon={Code2}
-                name="leetcode_username"
-                value={form.leetcode_username}
-                onChange={handleChange}
-                placeholder="e.g. 1234567/username"
-                required
-              />
-              {form.leetcode_username && (
-                <a
-                  href={'https://leetcode.com/' + form.leetcode_username}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 flex items-center gap-1 text-xs text-brand-600 hover:underline"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  View LeetCode profile
-                </a>
-              )}
-            </div>
-            <InputField
-              label="LinkedIn URL"
-              icon={Linkedin}
-              name="linkedin_url"
-              value={form.linkedin_url}
-              onChange={handleChange}
-              placeholder="https://linkedin.com/in/username"
-            />
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+        {/* Skills - full width */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Plus className="h-4 w-4 text-brand-600" />
             Skills
@@ -454,13 +491,16 @@ export default function CandidateProfile() {
           <SkillsInput skills={skills} onChange={setSkills} />
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+        {/* Resume - full width */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <FileText className="h-4 w-4 text-brand-600" />
             Resume / CV
-            <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-950 dark:text-red-400">
-              Required
-            </span>
+            {!profile?.resume_url && (
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-950 dark:text-red-400">
+                Required
+              </span>
+            )}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
             PDF only, maximum 5MB. Used for AI-powered resume parsing.
@@ -496,7 +536,7 @@ export default function CandidateProfile() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 py-8 text-sm font-medium text-slate-500 hover:border-brand-300 hover:text-brand-600 disabled:opacity-60 dark:border-slate-700 dark:hover:border-brand-700 dark:hover:text-brand-400"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 py-10 text-sm font-medium text-slate-500 transition-all hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50/50 disabled:opacity-60 dark:border-slate-700 dark:hover:border-brand-700 dark:hover:text-brand-400 dark:hover:bg-brand-950/20"
             >
               {isUploading
                 ? <><Loader2 className="h-5 w-5 animate-spin" /> Uploading...</>
@@ -514,16 +554,19 @@ export default function CandidateProfile() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-        >
-          {isSaving
-            ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
-            : <><Save className="h-4 w-4" /> Save Profile</>
-          }
-        </button>
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md hover:from-brand-700 hover:to-brand-600 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isSaving
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
+              : <><Save className="h-4 w-4" /> Save Profile</>
+            }
+          </button>
+        </div>
       </form>
     </div>
   )

@@ -32,12 +32,12 @@ const testimonials = [
 export default function Testimonials() {
   return (
     <section id="testimonials" className="relative py-20 sm:py-28 overflow-hidden bg-slate-50/50 dark:bg-slate-900/10 border-y border-slate-200/60 dark:border-slate-800/60">
-      
+
       {/* Grid background effect */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808003_1px,transparent_1px),linear-gradient(to_bottom,#80808003_1px,transparent_1px)] bg-[size:20px_20px]" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <motion.div
           initial="hidden"
