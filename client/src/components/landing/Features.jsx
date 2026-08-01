@@ -12,14 +12,14 @@ import { fadeUp, staggerContainer } from './motion'
 
 const features = [
   {
-    icon: GitBranch, 
+    icon: GitBranch,
     title: 'GitHub Analysis',
     description:
       'Extracts repository quality, commit frequency, language diversity, and open-source impact to quantify real-world developer contributions.',
     tag: 'GitHub API'
   },
   {
-    icon: Code2, 
+    icon: Code2,
     title: 'LeetCode Analytics',
     description:
       'Measures algorithmic efficiency, data structures expertise, and coding pace across easy, medium, and hard problem sets.',
@@ -58,13 +58,13 @@ const features = [
 export default function Features() {
   return (
     <section id="features" className="relative py-20 sm:py-28 overflow-hidden dark:bg-slate-950">
-      
+
       {/* Background decoration */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 -z-10 h-72 w-72 rounded-full bg-brand-200/10 blur-3xl dark:bg-brand-900/5" />
       <div className="absolute bottom-0 right-0 -z-10 h-72 w-72 rounded-full bg-blue-200/10 blur-3xl dark:bg-blue-900/5" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <motion.div
           initial="hidden"
@@ -81,7 +81,7 @@ export default function Features() {
             End-to-end Candidate Intelligence
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-400">
-            Every developer profile is transformed into clean, actionable, and 
+            Every developer profile is transformed into clean, actionable, and
             explainable suitability metrics through our automated ML evaluation pipeline.
           </p>
         </motion.div>

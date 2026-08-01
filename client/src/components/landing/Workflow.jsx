@@ -45,12 +45,12 @@ const steps = [
 export default function Workflow() {
   return (
     <section id="workflow" className="relative border-t border-slate-200 bg-slate-50/50 py-20 sm:py-28 dark:border-slate-800/80 dark:bg-slate-900/10">
-      
+
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-[size:24px_24px]" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <motion.div
           initial="hidden"
@@ -80,13 +80,13 @@ export default function Workflow() {
           className="mt-16 hidden lg:block"
         >
           <div className="relative flex items-stretch justify-between gap-3">
-            
+
             {/* Horizontal Line Background */}
             <div className="absolute top-[28px] left-[5%] right-[5%] h-[2px] bg-slate-200 dark:bg-slate-800 -z-10" />
 
             {steps.map((step, index) => (
               <div key={step.title} className="flex-1 flex flex-col items-center">
-                
+
                 {/* Step badge / Icon wrapper */}
                 <motion.div
                   variants={fadeUp}
@@ -96,7 +96,7 @@ export default function Workflow() {
                   <span className="absolute -top-7 scale-95 opacity-0 transition-all group-hover:scale-100 group-hover:opacity-100 text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider bg-brand-50/80 px-2 py-0.5 rounded-md dark:bg-brand-950/80 backdrop-blur-sm">
                     Step 0{index + 1}
                   </span>
-                  
+
                   <step.icon className="h-6 w-6" strokeWidth={1.75} />
                 </motion.div>
 

@@ -8,10 +8,9 @@ import {
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyCompany } from '../../api/companyApi'
-
 import { getRecruiterDashboardStats } from '../../api/jobApi'
 
-// ── Stat Card ──────────────────────────────────────────────────
+// ── Stat Card (kept your colored icon boxes) ────────────────
 function StatCard({ icon: Icon, label, value, sub, color = 'brand' }) {
   const colors = {
     brand: 'bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400',
@@ -34,24 +33,17 @@ function StatCard({ icon: Icon, label, value, sub, color = 'brand' }) {
 // ── Company Registration Popup ──────────────────────────────
 function CompanyRegistrationPopup({ onRegister, onDismiss }) {
   return (
-    // Backdrop
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950">
-
-        {/* Icon */}
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950 mb-4">
           <Building2 className="h-6 w-6 text-brand-600 dark:text-brand-400" />
         </div>
-
-        {/* Content */}
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
           Register Your Company
         </h2>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           To start posting jobs and finding candidates, please register your company profile first.
         </p>
-
-        {/* Actions */}
         <div className="mt-5 flex flex-col gap-2">
           <button
             onClick={onRegister}
@@ -74,34 +66,28 @@ function CompanyRegistrationPopup({ onRegister, onDismiss }) {
 
 // ── Main Dashboard ─────────────────────────────────────────────
 export default function RecruiterDashboard() {
-const { user } = useAuth()
-const navigate = useNavigate()
+  const { user } = useAuth()
+  const navigate = useNavigate()
 
-const [showCompanyPopup, setShowCompanyPopup] = useState(false)
-const [dashStats, setDashStats] = useState(null)
+  const [showCompanyPopup, setShowCompanyPopup] = useState(false)
+  const [dashStats, setDashStats] = useState(null)
 
-  // Check if company exists – only once per session
   useEffect(() => {
-  const dismissed = sessionStorage.getItem('company_popup_dismissed')
-  if (dismissed) return
+    const dismissed = sessionStorage.getItem('company_popup_dismissed')
+    if (dismissed) return
 
-  getMyCompany()
-    .then(company => {
-      if (!company) {
-        setShowCompanyPopup(true)
-      }
-    })
-    .catch(() => {
-      // Silent fail – don't block dashboard
-    })
+    getMyCompany()
+      .then(company => {
+        if (!company) {
+          setShowCompanyPopup(true)
+        }
+      })
+      .catch(() => {})
 
-  getRecruiterDashboardStats()
-    .then(setDashStats)
-    .catch(() => {
-      // Silent fail
-    })
-}, [])
-
+    getRecruiterDashboardStats()
+      .then(setDashStats)
+      .catch(() => {})
+  }, [])
 
   function handleRegisterNow() {
     setShowCompanyPopup(false)
@@ -114,39 +100,39 @@ const [dashStats, setDashStats] = useState(null)
   }
 
   // ── Dashboard data ──────────────────────────────────────────
- const stats = [
-  {
-    icon: Users,
-    label: 'Total Candidates',
-    value: dashStats?.total_candidates ?? '—',
-    sub: 'In the system',
-    color: 'brand',
-  },
-  {
-    icon: Search,
-    label: 'Searches Done',
-    value: '—',
-    sub: 'This session',
-    color: 'purple',
-  },
-  {
-    icon: Bookmark,
-    label: 'Shortlisted',
-    value: dashStats?.shortlisted ?? '—',
-    sub: 'Saved candidates',
-    color: 'amber',
-  },
-  {
-    icon: TrendingUp,
-    label: 'Avg Score',
-    value:
-      dashStats?.avg_score != null
-        ? `${dashStats.avg_score}/100`
-        : '—',
-    sub: 'Across shortlisted',
-    color: 'green',
-  },
-]
+  const stats = [
+    {
+      icon: Users,
+      label: 'Total Candidates',
+      value: dashStats?.total_candidates ?? '—',
+      sub: 'In the system',
+      color: 'brand',
+    },
+    {
+      icon: Search,
+      label: 'Searches Done',
+      value: '—',
+      sub: 'This session',
+      color: 'purple',
+    },
+    {
+      icon: Bookmark,
+      label: 'Shortlisted',
+      value: dashStats?.shortlisted ?? '—',
+      sub: 'Saved candidates',
+      color: 'amber',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Avg Score',
+      value:
+        dashStats?.avg_score != null
+          ? `${dashStats.avg_score}/100`
+          : '—',
+      sub: 'Across shortlisted',
+      color: 'green',
+    },
+  ]
 
   const actions = [
     {
@@ -176,14 +162,13 @@ const [dashStats, setDashStats] = useState(null)
   ]
 
   const recentActivity = [
-    { text: 'Account created successfully',       time: 'Just now',    status: 'done'    },
-    { text: 'No candidates searched yet',         time: 'Pending',     status: 'pending' },
-    { text: 'Shortlist is empty',                 time: 'Add candidates', status: 'info' },
+    { text: 'Account created successfully', time: 'Just now', status: 'done' },
+    { text: 'No candidates searched yet', time: 'Pending', status: 'pending' },
+    { text: 'Shortlist is empty', time: 'Add candidates', status: 'info' },
   ]
 
   return (
     <>
-      {/* Popup */}
       {showCompanyPopup && (
         <CompanyRegistrationPopup
           onRegister={handleRegisterNow}
@@ -191,11 +176,9 @@ const [dashStats, setDashStats] = useState(null)
         />
       )}
 
-      {/* Main dashboard */}
       <div className="space-y-6">
-
         {/* Welcome banner */}
-        <div className="rounded-xl border border-brand-100 bg-brand-50 px-6 py-5 dark:border-brand-900 dark:bg-brand-950/30">
+<div className="rounded-xl border border-brand-100 bg-brand-50 px-6 py-5 dark:border-slate-800 dark:bg-slate-950">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             Welcome, {user?.full_name?.split(' ')[0]} 👋
           </h2>
@@ -206,12 +189,13 @@ const [dashStats, setDashStats] = useState(null)
 
         {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((s) => <StatCard key={s.label} {...s} />)}
+          {stats.map((s) => (
+            <StatCard key={s.label} {...s} />
+          ))}
         </div>
 
         {/* Bottom section */}
         <div className="grid gap-6 lg:grid-cols-2">
-
           {/* Recent activity */}
           <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
@@ -224,13 +208,13 @@ const [dashStats, setDashStats] = useState(null)
               {recentActivity.map((a, i) => (
                 <div key={i} className="flex items-start gap-3 py-3">
                   <div className="mt-0.5 shrink-0">
-                    {a.status === 'done'    && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                    {a.status === 'done' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                     {a.status === 'pending' && <Clock className="h-4 w-4 text-amber-500" />}
-                    {a.status === 'info'    && <Star className="h-4 w-4 text-brand-500" />}
+                    {a.status === 'info' && <Star className="h-4 w-4 text-brand-500" />}
                   </div>
                   <div>
                     <p className="text-sm text-slate-700 dark:text-slate-300">{a.text}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{a.time}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{a.time}</p>
                   </div>
                 </div>
               ))}
@@ -250,7 +234,7 @@ const [dashStats, setDashStats] = useState(null)
                 <Link
                   key={a.to}
                   to={a.to}
-                  className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand-700 dark:hover:bg-slate-800"
+                  className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-brand-700 dark:hover:bg-slate-800/50"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${a.iconBg}`}>
@@ -261,7 +245,7 @@ const [dashStats, setDashStats] = useState(null)
                       <p className="text-xs text-slate-500 dark:text-slate-400">{a.sub}</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-1" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
                 </Link>
               ))}
             </div>

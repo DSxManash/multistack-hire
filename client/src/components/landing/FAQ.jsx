@@ -35,12 +35,12 @@ export default function FAQ() {
 
   return (
     <section id="faq" className="relative py-20 sm:py-28 overflow-hidden dark:bg-slate-950">
-      
+
       {/* Background decorations */}
       <div className="absolute top-1/2 right-1/4 -z-10 h-80 w-80 rounded-full bg-brand-400/5 blur-3xl" />
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <motion.div
           initial="hidden"
@@ -80,9 +80,8 @@ export default function FAQ() {
                     {faq.question}
                   </span>
                   <ChevronDown
-                    className={`h-4.5 w-4.5 text-slate-400 transition-transform duration-300 ${
-                      isOpen ? 'rotate-180 text-brand-500' : ''
-                    }`}
+                    className={`h-4.5 w-4.5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand-500' : ''
+                      }`}
                   />
                 </button>
 

@@ -29,11 +29,10 @@ export default function Navbar({ theme, onToggleTheme }) {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-        scrolled
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled
           ? 'border-b border-slate-200/50 bg-white/70 shadow-[0_2px_20px_-2px_rgba(0,0,0,0.02)] backdrop-blur-xl dark:border-slate-800/50 dark:bg-slate-950/75'
           : 'bg-transparent'
-      }`}
+        }`}
     >
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <a href="#home" className="group flex items-center gap-2.5">

@@ -13,7 +13,20 @@ export function useTheme() {
 
   useEffect(() => {
     const root = document.documentElement
-    root.classList.toggle('dark', theme === 'dark')
+    const body = document.body
+    const isDark = theme === 'dark'
+
+    root.classList.toggle('dark', isDark)
+    body.classList.toggle('dark', isDark)
+
+    if (isDark) {
+      body.style.backgroundColor = '#020617'
+      body.style.color = '#f8fafc'
+    } else {
+      body.style.backgroundColor = '#f8fafc'
+      body.style.color = '#0f172a'
+    }
+
     localStorage.setItem(STORAGE_KEY, theme)
   }, [theme])
 
