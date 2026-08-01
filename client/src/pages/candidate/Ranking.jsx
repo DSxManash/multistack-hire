@@ -191,6 +191,7 @@ export default function CandidateRanking() {
         </div>
       )}
 
+      {/* Profile incomplete warning */}
       {!isReady && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 dark:border-amber-900 dark:from-amber-950/30 dark:to-orange-950/30">
           <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
