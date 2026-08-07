@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import uuid
 
 from app.auth.password import hash_password
@@ -14,12 +15,16 @@ from app.models import user as user_model  # noqa: F401
 from app.models.user import UserRole
 from app.repositories.user_repo import UserRepository
 
-ADMIN_EMAIL = "admin@multistackhire.com"
-ADMIN_PASSWORD = "password123"
-ADMIN_FULL_NAME = "System Admin"
+ADMIN_EMAIL = os.getenv("SEED_ADMIN_EMAIL", "admin@multistackhire.com")
+ADMIN_PASSWORD = os.getenv("SEED_ADMIN_PASSWORD", "password123")
+ADMIN_FULL_NAME = os.getenv("SEED_ADMIN_FULL_NAME", "System Admin")
 
 
 async def seed_admin() -> None:
+    if os.getenv("SEED_ADMIN", "true").strip().lower() in {"0", "false", "no", "off"}:
+        print("Admin seed skipped (SEED_ADMIN=false)")
+        return
+
     async with AsyncSessionLocal() as session:
         repo = UserRepository(session)
         existing = await repo.get_by_email(ADMIN_EMAIL)
