@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getAllUsers,
-  activateUser,
-  deactivateUser,
   updateUserRole,
   deleteUser,
 } from '../../api/adminApi'
@@ -12,19 +10,11 @@ import {
   Users,
   Loader2,
   UserCheck,
-  UserX,
   Trash2,
   AlertCircle,
   Shield,
   Briefcase,
 } from 'lucide-react'
-
-const ROLES = [
-  { value: 'all', label: 'All roles' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'recruiter', label: 'Recruiter' },
-  { value: 'candidate', label: 'Candidate' },
-]
 
 const STATUSES = [
   { value: 'all', label: 'All statuses' },
@@ -59,7 +49,6 @@ export default function UserManagement() {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState([])
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
   const [actionId, setActionId] = useState(null)
@@ -85,7 +74,6 @@ export default function UserManagement() {
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase()
     return users.filter((u) => {
-      if (roleFilter !== 'all' && u.role !== roleFilter) return false
       if (statusFilter === 'active' && !u.is_active) return false
       if (statusFilter === 'inactive' && u.is_active) return false
       if (!term) return true
@@ -94,23 +82,7 @@ export default function UserManagement() {
         u.email.toLowerCase().includes(term)
       )
     })
-  }, [users, search, roleFilter, statusFilter])
-
-  async function handleToggleActive(targetUser) {
-    if (targetUser.id === currentUser?.id) return
-    setActionId(targetUser.id)
-    setError(null)
-    try {
-      const updated = targetUser.is_active
-        ? await deactivateUser(targetUser.id)
-        : await activateUser(targetUser.id)
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
-    } catch (err) {
-      setError(err.response?.data?.detail ?? 'Failed to update user status')
-    } finally {
-      setActionId(null)
-    }
-  }
+  }, [users, search, statusFilter])
 
   async function handleRoleChange(targetUser, newRole) {
     if (targetUser.id === currentUser?.id || targetUser.role === newRole) return
@@ -175,7 +147,7 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Filter Bar */}
+      {/* Filter Bar - Only Search and Status remain */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
@@ -187,15 +159,6 @@ export default function UserManagement() {
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-400/20"
           />
         </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-        >
-          {ROLES.map((r) => (
-            <option key={r.value} value={r.value}>{r.label}</option>
-          ))}
-        </select>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -217,7 +180,7 @@ export default function UserManagement() {
             No users found
           </p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {search || roleFilter !== 'all' || statusFilter !== 'all'
+            {search || statusFilter !== 'all'
               ? 'Try adjusting your search or filters'
               : 'Users will appear here once they register'}
           </p>
@@ -259,20 +222,8 @@ export default function UserManagement() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5">
-                        {isSelf ? (
-                          <RoleBadge role={u.role} />
-                        ) : (
-                          <select
-                            value={u.role}
-                            disabled={isBusy}
-                            onChange={(e) => handleRoleChange(u, e.target.value)}
-                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs capitalize shadow-sm focus:border-brand-500 focus:outline-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          >
-                            <option value="candidate">Candidate</option>
-                            <option value="recruiter">Recruiter</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                        )}
+                        {/* Replaced select with static RoleBadge */}
+                        <RoleBadge role={u.role} />
                       </td>
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -293,23 +244,7 @@ export default function UserManagement() {
                         <div className="flex items-center gap-2">
                           {!isSelf && (
                             <>
-                              <button
-                                onClick={() => handleToggleActive(u)}
-                                disabled={isBusy}
-                                title={u.is_active ? 'Deactivate' : 'Activate'}
-                                className={`rounded-lg p-2 transition-colors disabled:opacity-50 ${
-                                  u.is_active
-                                    ? 'text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-950/50'
-                                    : 'text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/30 dark:text-brand-400 dark:hover:bg-brand-950/50'
-                                }`}
-                              >
-                                {isBusy
-                                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                                  : u.is_active
-                                    ? <UserX className="h-4 w-4" />
-                                    : <UserCheck className="h-4 w-4" />
-                                }
-                              </button>
+                              {/* Removed Activate/Deactivate button */}
                               <button
                                 onClick={() => setDeleteTarget(u)}
                                 disabled={isBusy}

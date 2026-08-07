@@ -13,7 +13,8 @@ class JobCreate(BaseModel):
     location: str
     job_type: JobType = JobType.full_time
     company_name: str
-
+    # THIS FIELD so the recruiter can send it from the frontend
+    application_deadline: datetime | None = None 
 
 class JobResponse(BaseModel):
     id: str
@@ -27,17 +28,23 @@ class JobResponse(BaseModel):
     is_active: bool
     created_at: datetime
 
+    application_deadline: datetime | None = None
+
     model_config = {"from_attributes": True}
 
 
 class JobListResponse(BaseModel):
     id: str
     title: str
+    description: str        
+    requirements: str 
     location: str
     job_type: JobType
     company_name: str
     is_active: bool
     created_at: datetime
+
+    application_deadline: datetime | None = None  # Include the application deadline in the list response
 
     # How many applied — computed field
     application_count: int = 0

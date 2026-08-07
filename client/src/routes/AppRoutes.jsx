@@ -18,13 +18,11 @@ import AboutPage from '../pages/public/AboutPage'
 import AdminDashboard from '../pages/admin/Dashboard'
 import UserManagement from '../pages/admin/UserManagement'
 import ModelManagement from '../pages/admin/ModelManagement'
-import SystemAnalytics from '../pages/admin/SystemAnalytics'
 
 import RecruiterDashboard from '../pages/recruiter/Dashboard'
 import CandidateSearch from '../pages/recruiter/CandidateSearch'
 import CandidateDetails from '../pages/recruiter/CandidateDetails'
 import Shortlist from '../pages/recruiter/Shortlist'
-import Analytics from '../pages/recruiter/Analytics'
 
 import CandidateDashboard from '../pages/candidate/Dashboard'
 import CandidateJobs from '../pages/candidate/Jobs'
@@ -33,6 +31,10 @@ import Ranking from '../pages/candidate/Ranking'
 import Settings from '../pages/candidate/Settings'
 import RecruiterCompany from '../pages/recruiter/Company'
 import RecruiterJobs from '../pages/recruiter/Jobs'
+
+import CandidateApplications from '../pages/candidate/Applications'
+
+import JobApplications from '../pages/recruiter/JobApplications'
 
 function getRoleDashboard(role) {
   const dashboards = {
@@ -84,7 +86,6 @@ export default function AppRoutes() {
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/model" element={<ModelManagement />} />
             <Route path="/admin/model/retrain" element={<Navigate to="/admin/model" replace />} />
-            <Route path="/admin/analytics" element={<SystemAnalytics />} />
           </Route>
         </Route>
 
@@ -96,8 +97,9 @@ export default function AppRoutes() {
             <Route path="/recruiter/search" element={<CandidateSearch />} />
             <Route path="/recruiter/candidates/:id" element={<CandidateDetails />} />
             <Route path="/recruiter/shortlist" element={<Shortlist />} />
-            <Route path="/recruiter/analytics" element={<Analytics />} />
             <Route path="/recruiter/company" element={<RecruiterCompany />} />
+            <Route path="/recruiter/jobs/:jobId/applications" element={<JobApplications />} />
+            <Route path="/recruiter/jobs/:jobId/applications/*" element={<JobApplications />} />
           </Route>
         </Route>
 
@@ -109,6 +111,7 @@ export default function AppRoutes() {
             <Route path="/candidate/profile" element={<Profile />} />
             <Route path="/candidate/ranking" element={<Ranking />} />
             <Route path="/candidate/settings" element={<Settings />} />
+            <Route path="/candidate/applications" element={<CandidateApplications />} />
           </Route>
         </Route>
 

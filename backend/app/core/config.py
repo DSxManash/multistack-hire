@@ -3,7 +3,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
-
+from typing import Optional
 
 def normalize_database_url(url: str) -> str:
     """
@@ -57,11 +57,9 @@ def database_needs_ssl(url: str) -> bool:
         return True
     return False
 
-
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
-    # Optional override: true | false | auto (default)
     DATABASE_SSL: str = "auto"
 
     # JWT
@@ -76,7 +74,7 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_NAME: str = "multistack-hire"
 
-    # CORS — comma-separated frontend origins (no trailing slash).
+    # CORS
     CORS_ORIGINS: str = (
         "http://localhost:5173,"
         "http://127.0.0.1:5173,"
@@ -96,6 +94,14 @@ class Settings(BaseSettings):
     MINIO_PUBLIC_ENDPOINT: str | None = None
     MINIO_PUBLIC_SECURE: bool | None = None
 
+    # External APIs
+    GITHUB_API_TOKEN: Optional[str] = None
+    GITHUB_API_URL: str = "https://api.github.com"
+    LEETCODE_GRAPHQL_URL: str = "https://leetcode.com/graphql"
+    GITHUB_API_TIMEOUT: int = 15
+    LEETCODE_API_TIMEOUT: int = 15
+
+    # Pydantic v2 configuration
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[2] / ".env",
         env_file_encoding="utf-8",
@@ -109,10 +115,13 @@ class Settings(BaseSettings):
     @property
     def use_database_ssl(self) -> bool:
         flag = (self.DATABASE_SSL or "auto").strip().lower()
+
         if flag in {"1", "true", "yes", "require"}:
             return True
+
         if flag in {"0", "false", "no", "disable", "disabled"}:
             return False
+
         return database_needs_ssl(self.async_database_url)
 
     @property
@@ -127,10 +136,10 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.APP_ENV.lower() == "production"
 
-
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
 
 
-settings = get_settings()
+settings = get_settings()    
+    

@@ -10,7 +10,7 @@ const footerLinks = {
   Account: [
     { label: 'Login', href: '/login' },
     { label: 'Register', href: '/register' },
-    { label: 'Admin Login', href: '/admin/login' },
+    // { label: 'Admin Login', href: '/admin/login' },
     { label: 'Get Started', href: '/register' },
   ],
   Project: [

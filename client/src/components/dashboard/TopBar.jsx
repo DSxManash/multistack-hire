@@ -1,10 +1,11 @@
+
 import { useState, useRef, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../hooks/useAuth'
 import {
   Menu, Sun, Moon, LogOut, ChevronDown,
-  User, Settings, Building2, BarChart3,
+  User, Settings, Building2,
   Users, Brain
 } from 'lucide-react'
 
@@ -15,18 +16,17 @@ const pageTitles = {
   '/candidate/ranking':    'My Ranking',
   '/candidate/settings':   'Settings',
   '/candidate/jobs':       'Browse Jobs',
+  '/candidate/applications': 'My Applications',
   '/recruiter/dashboard':  'Dashboard',
   '/recruiter/jobs':       'Job Postings',
   '/recruiter/company':    'Company Profile',
   '/recruiter/search':     'Candidate Search',
   '/recruiter/shortlist':  'Shortlist',
-  '/recruiter/analytics':  'Analytics',
   '/admin/dashboard':      'Dashboard',
   '/admin/users':          'User Management',
   '/admin/model':          'ML Model',
   '/admin/model/retrain':  'Retrain Model',
-  '/admin/analytics':      'System Analytics',
-  '/admin/login': 'Admin Login',
+  '/admin/login':          'Admin Login',
 }
 
 const roleMenuItems = {
@@ -36,7 +36,6 @@ const roleMenuItems = {
   ],
   recruiter: [
     { label: 'Company',    icon: Building2, path: '/recruiter/company' },
-    { label: 'Analytics',  icon: BarChart3,  path: '/recruiter/analytics' },
   ],
   admin: [
     { label: 'User Management', icon: Users,  path: '/admin/users' },
@@ -59,7 +58,10 @@ export default function TopBar({ onOpenMobile }) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
 
-  const pageTitle = pageTitles[location.pathname] ?? 'Dashboard'
+  // ✅ UPDATED DYNAMIC LOGIC HERE
+  const pageTitle = pageTitles[location.pathname] 
+    ?? (location.pathname.includes('/applications') ? 'Job Applications' : 'Dashboard')
+
   const menuItems = roleMenuItems[user?.role] ?? []
 
   useEffect(() => {
@@ -72,8 +74,9 @@ export default function TopBar({ onOpenMobile }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  function handleCloseDropdown() {
+  function handleNavigate(path) {
     setDropdownOpen(false)
+    navigate(path)
   }
 
   function handleLogout() {
@@ -82,7 +85,7 @@ export default function TopBar({ onOpenMobile }) {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80">
+    <header className="relative z-50 flex h-16 shrink-0 items-center justify-between overflow-visible border-b border-slate-200 bg-white/80 px-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80">
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobile}
@@ -146,15 +149,15 @@ export default function TopBar({ onOpenMobile }) {
               </div>
               <div className="py-1.5">
                 {menuItems.map(item => (
-                  <Link
+                  <button
                     key={item.path}
-                    to={item.path}
-                    onClick={handleCloseDropdown}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                    type="button"
+                    onClick={() => handleNavigate(item.path)}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     <item.icon className="h-4 w-4 text-slate-400" />
                     {item.label}
-                  </Link>
+                  </button>
                 ))}
               </div>
               <div className="border-t border-slate-100 py-1.5 dark:border-slate-800">
