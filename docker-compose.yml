@@ -8,8 +8,10 @@ services:
     volumes:
       - ./client:/app
       - /app/node_modules
-    env_file:
-      - ./client/.env
+    # env_file:
+      # - ./client/.env
+    environment:
+      - VITE_PROXY_TARGET=http://backend:8000
     # Re-install when package.json changes (node_modules is a separate Docker volume).
     command: sh -c "npm install && npm run dev -- --host"
     networks:
@@ -30,8 +32,10 @@ services:
     networks:
       - app-network
     depends_on:
-      - db
-      - minio  # Add minio service to the backend dependencies
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
 
   db:
     image: postgres:16-alpine
@@ -43,6 +47,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   minio:
     image: minio/minio:RELEASE.2024-10-13T13-34-11Z
