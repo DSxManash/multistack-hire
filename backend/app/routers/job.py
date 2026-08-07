@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.security import get_current_user
 from app.models.user import User, UserRole
-from app.models.job import ApplicationStatus
+from app.models.job import Application, ApplicationStatus
 from app.schemas.job import ApplicationWithCandidate, JobCreate, JobResponse, JobListResponse, ApplicationResponse
 from app.services.job_service import JobService
 from app.schemas.job import ShortlistedApplication
@@ -68,6 +68,41 @@ async def my_applications(
     """Candidate views their own applications."""
     service = JobService(db)
     return await service.my_applications(current_user.id)
+
+@router.get("/my-applications-detail", response_model=list[dict])
+async def my_applications_detail(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.candidate])),
+):
+    """Candidate's applications with full job details."""
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(Application)
+        .options(selectinload(Application.job))
+        .where(Application.candidate_id == current_user.id)
+        .order_by(Application.applied_at.desc())
+    )
+    applications = result.scalars().all()
+
+    return [
+        {
+            "id": app.id,
+            "status": app.status.value,
+            "applied_at": app.applied_at.isoformat(),
+            "job": {
+                "id": app.job.id,
+                "title": app.job.title,
+                "company_name": app.job.company_name,
+                "location": app.job.location,
+                "job_type": app.job.job_type.value,
+                "description": app.job.description,
+                "requirements": app.job.requirements,
+                "is_active": app.job.is_active,
+                "created_at": app.job.created_at.isoformat(),
+            }
+        }
+        for app in applications
+    ]
 
 
 # ── Dynamic {job_id} paths after ────────────────────────────────────────────
