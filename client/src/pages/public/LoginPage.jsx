@@ -199,21 +199,21 @@ export default function LoginPage() {
                 Create one
               </Link>
             </p>
-            <div className="relative pt-4">
+            {/* <div className="relative pt-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="bg-white px-2 text-slate-400 dark:bg-slate-950 dark:text-slate-500">or</span>
               </div>
-            </div>
-            <Link
+            </div> */}
+            {/* <Link
               to="/admin/login"
               className="flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
             >
               <ShieldCheck className="h-4 w-4" />
               Admin Login
-            </Link>
+            </Link> */}
           </div>
         </div>
       </motion.div>

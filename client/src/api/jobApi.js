@@ -94,3 +94,16 @@ export const getRankedApplicants = async (jobId) => {
   const response = await axiosInstance.get(`/ranking/job/${jobId}`)
   return response.data
 }
+
+// Get my applications with job details for the candidate dashboard
+export const getMyApplicationsWithJobs = async () => {
+  const response = await axiosInstance.get('/jobs/my-applications-detail')
+  return response.data
+}
+
+
+// for admin to trigger scoring for all applicants of a specific job
+export const scoreJobApplicants = async (jobId) => {
+  const response = await axiosInstance.post(`/ranking/score/job/${jobId}`)
+  return response.data
+}

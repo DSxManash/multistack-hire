@@ -16,7 +16,7 @@ export default function DashboardShell({ navItems }) {
         onToggleCollapse={() => setIsCollapsed(prev => !prev)}
         onCloseMobile={() => setIsMobileOpen(false)}
       />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-visible">
         <TopBar onOpenMobile={() => setIsMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto p-6 sm:p-8">
           <Outlet />

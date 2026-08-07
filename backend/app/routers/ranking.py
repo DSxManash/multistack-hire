@@ -127,3 +127,89 @@ async def score_all(
 ):
     """Admin triggers scoring for all candidates with complete profiles."""
     return await score_all_candidates(db)
+
+# add route to score all applicants for a specific job
+@router.post("/score/job/{job_id}")
+async def score_job_applicants(
+    job_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.recruiter])),
+):
+    """
+    Recruiter scores ALL candidates who applied to their job.
+    Returns scored + ranked list.
+    """
+    from app.models.job import Application, Job
+    from sqlalchemy.orm import selectinload
+
+    # Verify job belongs to recruiter
+    job_result = await db.execute(
+        select(Job).where(
+            Job.id == job_id,
+            Job.recruiter_id == current_user.id
+        )
+    )
+    job = job_result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    # Get all applicants
+    apps_result = await db.execute(
+        select(Application)
+        .options(selectinload(Application.candidate))
+        .where(Application.job_id == job_id)
+    )
+    applications = apps_result.scalars().all()
+
+    scored = []
+    failed = []
+
+    for app in applications:
+        candidate = app.candidate
+        if not candidate.profile_completed:
+            failed.append({
+                "id": candidate.id,
+                "name": candidate.full_name,
+                "error": "Profile incomplete"
+            })
+            continue
+        try:
+            from app.services.ranking_service import score_candidate
+            result = await score_candidate(candidate, db)
+            scored.append({
+                "application_id": app.id,
+                "status": app.status.value,
+                "candidate": {
+                    "id": candidate.id,
+                    "full_name": candidate.full_name,
+                    "email": candidate.email,
+                    "ranking_score": result["score"],
+                    "github_username": candidate.github_username,
+                    "leetcode_username": candidate.leetcode_username,
+                    "skills": candidate.get_skills(),
+                    "shap_breakdown": result.get("shap_breakdown"),
+                },
+                "applied_at": app.applied_at.isoformat(),
+            })
+        except Exception as e:
+            failed.append({
+                "id": candidate.id,
+                "name": candidate.full_name,
+                "error": str(e)
+            })
+
+    # Sort by score descending
+    scored.sort(
+        key=lambda x: x["candidate"]["ranking_score"] or -1,
+        reverse=True
+    )
+
+    return {
+        "job_id": job_id,
+        "job_title": job.title,
+        "total": len(applications),
+        "scored": len(scored),
+        "failed": len(failed),
+        "applicants": scored,
+        "failures": failed,
+    }

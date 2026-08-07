@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -10,7 +12,11 @@ class JobRepository:
         self.db = db
 
     async def create_job(self, recruiter_id: str, data: dict) -> Job:
-        job = Job(recruiter_id=recruiter_id, **data)
+        payload = dict(data)
+        if payload.get("application_deadline") is None:
+            payload["application_deadline"] = datetime.utcnow() + timedelta(days=30)
+
+        job = Job(recruiter_id=recruiter_id, **payload)
         self.db.add(job)
         await self.db.flush()
         await self.db.refresh(job)

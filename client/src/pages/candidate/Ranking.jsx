@@ -276,32 +276,36 @@ export default function CandidateRanking() {
 
       {/* Breakdown – using full width with side‑by‑side bars */}
       {shap && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Score Breakdown</h3>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <FactorBar
-              label="GitHub Activity"
-              icon={Github}
-              value={shap.github}
-              color="text-slate-700 dark:text-slate-300"
-              description="Followers, repos, language diversity, account age"
-            />
-            <FactorBar
-              label="LeetCode Performance"
-              icon={Code2}
-              value={shap.leetcode}
-              color="text-amber-600 dark:text-amber-400"
-              description="Easy, medium, hard problems solved"
-            />
-            <FactorBar
-              label="Resume / CV"
-              icon={FileText}
-              value={shap.cv}
-              color="text-brand-600 dark:text-brand-400"
-              description="Skills, projects, internships, certifications, CGPA"
-            />
-          </div>
+        // <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
+        //   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Score Breakdown</h3>
+        //   <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        //     <FactorBar
+        //       label="GitHub Activity"
+        //       icon={Github}
+        //       value={shap.github}
+        //       color="text-slate-700 dark:text-slate-300"
+        //       description="Followers, repos, language diversity, account age"
+        //     />
+        //     <FactorBar
+        //       label="LeetCode Performance"
+        //       icon={Code2}
+        //       value={shap.leetcode}
+        //       color="text-amber-600 dark:text-amber-400"
+        //       description="Easy, medium, hard problems solved"
+        //     />
+        //     <FactorBar
+        //       label="Resume / CV"
+        //       icon={FileText}
+        //       value={shap.cv}
+        //       color="text-brand-600 dark:text-brand-400"
+        //       description="Skills, projects, internships, certifications, CGPA"
+        //     />
+        //   </div>
+        // </div>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Your Profile Summary</h2>
         </div>
+        
       )}
 
       {/* Summaries – grid with 2 or 3 columns */}
