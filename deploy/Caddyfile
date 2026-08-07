@@ -1,0 +1,56 @@
+# Global options
+{
+	email {$ACME_EMAIL}
+}
+
+# Primary site — React SPA + API reverse proxy
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Backend REST API (keeps /api prefix — FastAPI routes are /api/v1/...)
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# Health checks (not under /api/v1)
+	handle /health* {
+		reverse_proxy backend:8000
+	}
+
+	# Static SPA — React Router client-side routes
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		# Basic hardening; adjust CSP later if you embed third-party scripts.
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# Public MinIO / S3 API host for browser presigned resume URLs
+storage.{$DOMAIN} {
+	encode zstd gzip
+
+	reverse_proxy minio:9000
+
+	header {
+		X-Content-Type-Options nosniff
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

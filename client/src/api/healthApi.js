@@ -1,10 +1,10 @@
-import { API_BASE_URL } from './config'
+import { HEALTH_BASE_URL } from './config'
 
 /**
  * Backend health lives at GET /health (not under /api/v1).
  */
 export async function fetchHealth() {
-  const response = await fetch(`${API_BASE_URL}/health`)
+  const response = await fetch(`${HEALTH_BASE_URL}/health`)
 
   if (!response.ok) {
     throw new Error(`Health check failed (${response.status})`)
@@ -14,7 +14,7 @@ export async function fetchHealth() {
 }
 
 export async function fetchHealthDb() {
-  const response = await fetch(`${API_BASE_URL}/health/db`)
+  const response = await fetch(`${HEALTH_BASE_URL}/health/db`)
   const data = await response.json()
 
   if (!response.ok) {

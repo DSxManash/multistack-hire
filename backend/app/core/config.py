@@ -83,12 +83,16 @@ class Settings(BaseSettings):
     )
     CORS_ORIGIN_REGEX: str = r"https://.*\.github\.io"
 
-    # MinIO
+    # MinIO — internal Docker hostname for server-side upload/download
     MINIO_ENDPOINT: str = "minio:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin123"
     MINIO_BUCKET_NAME: str = "multistack-hire-resumes"
     MINIO_SECURE: bool = False
+    # Optional public host used only when minting browser-facing presigned URLs
+    # (e.g. storage.example.com served by Caddy). Falls back to MINIO_ENDPOINT.
+    MINIO_PUBLIC_ENDPOINT: str | None = None
+    MINIO_PUBLIC_SECURE: bool | None = None
 
     # External APIs
     GITHUB_API_TOKEN: Optional[str] = None

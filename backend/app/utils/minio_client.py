@@ -9,13 +9,24 @@ import asyncio
 from functools import partial
 
 
-def _get_client() -> Minio:
+def _get_client(*, public: bool = False) -> Minio:
     """Create MinIO client — called fresh each time to avoid connection issues."""
+    if public and settings.MINIO_PUBLIC_ENDPOINT:
+        endpoint = settings.MINIO_PUBLIC_ENDPOINT
+        secure = (
+            settings.MINIO_SECURE
+            if settings.MINIO_PUBLIC_SECURE is None
+            else settings.MINIO_PUBLIC_SECURE
+        )
+    else:
+        endpoint = settings.MINIO_ENDPOINT
+        secure = settings.MINIO_SECURE
+
     return Minio(
-        endpoint=settings.MINIO_ENDPOINT,
+        endpoint=endpoint,
         access_key=settings.MINIO_ACCESS_KEY,
         secret_key=settings.MINIO_SECRET_KEY,
-        secure=settings.MINIO_SECURE,
+        secure=secure,
     )
 
 
@@ -63,7 +74,8 @@ def _get_presigned_url_sync(object_name: str) -> str:
     without exposing credentials.
     """
     from datetime import timedelta
-    client = _get_client()
+    # Sign against the public host so browsers can reach the object.
+    client = _get_client(public=True)
     url = client.presigned_get_object(
         bucket_name=settings.MINIO_BUCKET_NAME,
         object_name=object_name,
