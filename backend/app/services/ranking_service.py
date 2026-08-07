@@ -2,9 +2,6 @@
 
 import json
 from datetime import datetime
-
-from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.user import User, UserRole
@@ -30,13 +27,9 @@ async def score_candidate(user: User, db: AsyncSession) -> dict:
     if user.github_username:
         try:
             github_data = await fetch_github_data(user.github_username)
-            print("\nGitHub fetched successfully")
-            print(json.dumps(github_data, indent=2))
         except Exception as e:
-            print(f"\nGitHub ERROR: {e}")
             errors.append(f"GitHub: {str(e)}")
     else:
-        print("\nGitHub username missing")
         errors.append("GitHub username not set")
 
     # ── LeetCode (with graceful fallback) ─────────────────────────
@@ -44,13 +37,10 @@ async def score_candidate(user: User, db: AsyncSession) -> dict:
     if user.leetcode_username:
         try:
             leetcode_data = await fetch_leetcode_data(user.leetcode_username)
-            print("\nLeetCode fetched successfully")
-            print(json.dumps(leetcode_data, indent=2))
         except Exception as e:
             errors.append(f"LeetCode: {str(e)} — using 0 values")
             leetcode_data = get_empty_leetcode_data()
     else:
-        print("\nLeetCode username missing")
         errors.append("LeetCode username not set")
 
     # ── CV Pipeline ───────────────────────────────────────────────
@@ -70,7 +60,6 @@ async def score_candidate(user: User, db: AsyncSession) -> dict:
         except Exception as e:
             errors.append(f"CV Parser: {str(e)}")
     else:
-        print("\nResume missing")
         errors.append("Resume not uploaded")
 
     # ── Score ─────────────────────────────────────────────────────
@@ -87,11 +76,8 @@ async def score_candidate(user: User, db: AsyncSession) -> dict:
     user.last_scored_at = datetime.utcnow()
     user.updated_at = datetime.utcnow()
 
-    await db.commit()
+    await db.flush()
     await db.refresh(user)
-
-    print("\nSaved successfully")
-    print("=" * 70 + "\n")
 
     return {
         "candidate_id": user.id,
@@ -104,6 +90,7 @@ async def score_candidate(user: User, db: AsyncSession) -> dict:
         "errors": errors,
     }
 
+
 async def score_all_candidates(db: AsyncSession) -> dict:
     result = await db.execute(
         select(User).where(
@@ -112,11 +99,10 @@ async def score_all_candidates(db: AsyncSession) -> dict:
             User.is_active == True,
         )
     )
-
     candidates = result.scalars().all()
 
     results = []
-    failures = []
+    failed = []
 
     for candidate in candidates:
         try:
@@ -128,17 +114,15 @@ async def score_all_candidates(db: AsyncSession) -> dict:
                 "errors": scored.get("errors", []),
             })
         except Exception as e:
-            failures.append(
-                {
-                    "id": candidate.id,
-                    "name": candidate.full_name,
-                    "error": str(e),
-                }
-            )
+            failed.append({
+                "id": candidate.id,
+                "name": candidate.full_name,
+                "error": str(e),
+            })
 
     return {
         "scored": len(results),
-        "failed": len(failures),
+        "failed": len(failed),
         "results": results,
-        "failures": failures,
+        "failures": failed,
     }

@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../hooks/useAuth'
 import {
@@ -74,8 +74,9 @@ export default function TopBar({ onOpenMobile }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  function handleCloseDropdown() {
+  function handleNavigate(path) {
     setDropdownOpen(false)
+    navigate(path)
   }
 
   function handleLogout() {
@@ -148,7 +149,7 @@ export default function TopBar({ onOpenMobile }) {
               </div>
               <div className="py-1.5">
                 {menuItems.map(item => (
-                  <Link
+                  <button
                     key={item.path}
                     type="button"
                     onClick={() => handleNavigate(item.path)}
@@ -156,7 +157,7 @@ export default function TopBar({ onOpenMobile }) {
                   >
                     <item.icon className="h-4 w-4 text-slate-400" />
                     {item.label}
-                  </Link>
+                  </button>
                 ))}
               </div>
               <div className="border-t border-slate-100 py-1.5 dark:border-slate-800">
