@@ -50,6 +50,7 @@ async def get_my_score(
         "shap_breakdown": json.loads(current_user.shap_values) if current_user.shap_values else None,
         "github_data": json.loads(current_user.github_data) if current_user.github_data else None,
         "leetcode_data": json.loads(current_user.leetcode_data) if current_user.leetcode_data else None,
+        "cv_features": json.loads(current_user.resume_text) if current_user.resume_text else None,
         "last_scored_at": current_user.last_scored_at,
     }
 
