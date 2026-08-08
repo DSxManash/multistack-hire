@@ -96,6 +96,16 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod down -v
 ## Notes
 
 - Frontend is built with `VITE_API_URL=/api` so the browser stays same-origin; Caddy proxies `/api` to FastAPI.
-- Resume downloads use `https://storage.$DOMAIN` via `MINIO_PUBLIC_ENDPOINT`.
+- **CV storage / scoring** uses the internal Docker hostname `minio:9000` (`MINIO_ENDPOINT`). Object keys like `resumes/...` are stored on the user row — not local filesystem paths.
+- **Presigned browser links** (optional “open in tab” flows) use `https://storage.$DOMAIN` via `MINIO_PUBLIC_ENDPOINT`. DNS for `storage.$DOMAIN` is required for those links; authenticated API proxies (`GET /api/v1/candidate/resume`, ranking resume proxy) work without the browser talking to MinIO directly.
+- Keep `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` equal to `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`. Compose forces this for the backend. **Do not rotate MinIO root credentials** without recreating the `minio_data` volume (`down -v`), or uploads will fail with AccessDenied against the old volume identity.
 - CORS is set to `https://$DOMAIN` only for this compose stack.
 - Dev stack remains `docker compose up` (see root `docker-compose.yml`).
+
+## Verify CV upload after deploy
+
+1. `curl -sS https://$DOMAIN/health/storage` — expect `"status":"ok"` and your bucket name.
+2. Sign in as a candidate → Profile → upload a PDF resume.
+3. Backend logs should show `[minio] put_object ok ... object=resumes/...` and `[cv] upload stored ...`.
+4. Trigger scoring (`POST /api/v1/ranking/score/me` or recruiter Rank Candidates). Logs should show `[cv] downloading resume` / `[cv] pipeline complete`. Response `cv_features` should be non-zero, or `errors` should include an explicit `CV Parser: ...` line (not a silent empty CV).
+5. Preview via Profile **Preview** (authenticated blob) to confirm retrieval.

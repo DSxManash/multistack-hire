@@ -33,7 +33,7 @@ services:
       backend:
         condition: service_healthy
       minio:
-        condition: service_started
+        condition: service_healthy
     networks:
       - app-network
 
@@ -62,7 +62,7 @@ services:
       db:
         condition: service_healthy
       minio:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -103,13 +103,14 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_SERVER_URL: https://storage.${DOMAIN}
     volumes:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      interval: 10s
+      timeout: 5s
+      retries: 10
       start_period: 15s
     networks:
       - app-network
