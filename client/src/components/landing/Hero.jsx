@@ -1,56 +1,63 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, BarChart3, Sparkles, Code2, FileText, CheckCircle2, Cpu } from 'lucide-react'
+import { ArrowRight, BarChart3, Sparkles, Code2, FileText, CheckCircle2, Cpu, GitBranch } from 'lucide-react'
 import { fadeUp } from './motion'
 
-const mockCandidates = [
+/** Illustrative candidates: one model score + raw source features (matches Ranking UI). */
+const demoCandidates = [
   {
     name: 'Alex Chen',
-    role: 'Senior Backend Engineer',
-    score: '96.4%',
-    github: '2.4k commits',
-    leetcode: 'Guardian (2340)',
-    cvMatch: '95% Keyword Match',
+    role: 'Backend Engineer',
+    score: 92.4,
     avatarColor: 'bg-emerald-500',
-    metrics: { git: 95, code: 98, cv: 96 }
+    github: { followers: 148, repos: 42, languages: 8, ageDays: 1820 },
+    leetcode: { easy: 120, medium: 85, hard: 24 },
+    cv: { skills: 18, projects: 6, internships: 2, certifications: 3, cgpa: 3.7 },
   },
   {
     name: 'Sarah Jenkins',
     role: 'Full Stack Engineer',
-    score: '91.8%',
-    github: '1.8k commits',
-    leetcode: 'Knight (1950)',
-    cvMatch: '90% Keyword Match',
+    score: 86.1,
     avatarColor: 'bg-blue-500',
-    metrics: { git: 89, code: 92, cv: 94 }
+    github: { followers: 96, repos: 31, languages: 6, ageDays: 1240 },
+    leetcode: { easy: 95, medium: 62, hard: 12 },
+    cv: { skills: 14, projects: 4, internships: 1, certifications: 2, cgpa: 3.5 },
   },
   {
     name: 'Marcus Vance',
-    role: 'Machine Learning Engineer',
-    score: '88.5%',
-    github: '980 commits',
-    leetcode: '450 Solved',
-    cvMatch: '89% Keyword Match',
+    role: 'ML Engineer',
+    score: 81.5,
     avatarColor: 'bg-violet-500',
-    metrics: { git: 85, code: 87, cv: 92 }
-  }
+    github: { followers: 210, repos: 28, languages: 7, ageDays: 2100 },
+    leetcode: { easy: 70, medium: 48, hard: 18 },
+    cv: { skills: 22, projects: 5, internships: 3, certifications: 4, cgpa: 3.8 },
+  },
+]
+
+const pipelineStatuses = [
+  'Fetching GitHub profile...',
+  'Fetching LeetCode stats...',
+  'Parsing CV from storage...',
+  'Building feature vector...',
+  'Running XGBoost model...',
+  'Scores updated!',
 ]
 
 export default function Hero() {
   const [selectedCandidate, setSelectedCandidate] = useState(0)
-  const [syncStatus, setSyncStatus] = useState('Idle')
+  const [syncStatus, setSyncStatus] = useState(pipelineStatuses[0])
 
-  // Simulate dashboard background activity
   useEffect(() => {
-    const statuses = ['Fetching GitHub commits...', 'Analyzing LeetCode ranks...', 'Parsing CV text...', 'Running XGBoost model...', 'Scores updated!']
     let i = 0
     const interval = setInterval(() => {
-      setSyncStatus(statuses[i])
-      i = (i + 1) % statuses.length
+      i = (i + 1) % pipelineStatuses.length
+      setSyncStatus(pipelineStatuses[i])
     }, 4000)
     return () => clearInterval(interval)
   }, [])
+
+  const active = demoCandidates[selectedCandidate]
 
   return (
     <section id="home" className="relative overflow-hidden pt-28 pb-20 sm:pt-36 sm:pb-32 dark:bg-slate-950">
@@ -126,159 +133,209 @@ export default function Hero() {
             </motion.div>
           </div>
 
-          {/* Interactive Candidate Dashboard Mockup (Right Column) */}
+          {/* Interactive Candidate Dashboard (Right Column) */}
           <div className="lg:col-span-6">
             <motion.div
               custom={0.2}
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xl sm:p-6 dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+              className="relative rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xl sm:p-5 dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
             >
-              {/* Header inside mockup */}
-              <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-2 w-2 rounded-full bg-brand-500 animate-pulse" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {/* Workspace chrome */}
+              <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3 dark:border-slate-800">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-brand-500 animate-pulse" />
+                  <span className="truncate text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Live Demo Workspace
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-950 dark:text-slate-400">
-                  <Cpu className="h-3 w-3 text-brand-500" />
-                  <span className="font-mono">{syncStatus}</span>
+                <div className="flex max-w-[55%] shrink-0 items-center gap-1.5 truncate rounded-lg bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-slate-950 dark:text-slate-400 sm:max-w-none sm:text-[11px]">
+                  <Cpu className="h-3 w-3 shrink-0 text-brand-500" />
+                  <span className="truncate font-mono">{syncStatus}</span>
                 </div>
               </div>
 
-              {/* Main inner grid */}
-              <div className="grid gap-5 sm:grid-cols-12">
-
-                {/* Candidates List Column */}
-                <div className="space-y-3 sm:col-span-6">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider dark:text-slate-500">
+              <div className="grid items-stretch gap-3 sm:grid-cols-12 sm:gap-4">
+                {/* Ranked Candidates — compact list */}
+                <div className="flex flex-col sm:col-span-5">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     Ranked Candidates
                   </p>
-                  <div className="space-y-2">
-                    {mockCandidates.map((cand, idx) => (
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    {demoCandidates.map((cand, idx) => (
                       <button
                         key={cand.name}
+                        type="button"
                         onClick={() => setSelectedCandidate(idx)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-300 ${selectedCandidate === idx
-                            ? 'border-brand-500 bg-brand-50/50 shadow-sm dark:border-brand-500/50 dark:bg-brand-950/20'
-                            : 'border-slate-100 hover:border-slate-200 bg-transparent dark:border-slate-800/60 dark:hover:border-slate-700'
+                        className={`flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 py-2.5 text-left transition-all duration-300 ${selectedCandidate === idx
+                            ? 'border-brand-500 bg-brand-50/60 shadow-sm dark:border-brand-500/50 dark:bg-brand-950/30'
+                            : 'border-slate-100 bg-slate-50/40 hover:border-slate-200 hover:bg-slate-50 dark:border-slate-800/80 dark:bg-slate-950/40 dark:hover:border-slate-700'
                           }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <div className={`h-8 w-8 rounded-full ${cand.avatarColor} flex items-center justify-center text-white text-xs font-bold`}>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${cand.avatarColor} text-[11px] font-bold text-white`}>
                             {cand.name.split(' ').map(n => n[0]).join('')}
                           </div>
-                          <div>
-                            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight">
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold leading-tight text-slate-800 dark:text-slate-200">
                               {cand.name}
                             </p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                            <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
                               {cand.role}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs font-bold text-brand-600 dark:text-brand-400">
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-bold tabular-nums text-brand-600 dark:text-brand-400">
                             {cand.score}
                           </p>
-                          <p className="text-[8px] text-slate-400">Match</p>
+                          <p className="text-[8px] uppercase tracking-wide text-slate-400">AI Score</p>
                         </div>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Score breakdown detail card */}
-                <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 sm:col-span-6 dark:border-slate-800/50 dark:bg-slate-950/50">
+                {/* Selected candidate workspace */}
+                <div className="flex flex-col rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/50 sm:col-span-7">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={selectedCandidate}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="h-full flex flex-col justify-between"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.18 }}
+                      className="flex h-full flex-col p-3 sm:p-3.5"
                     >
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                            XGBoost Score Profile
-                          </h3>
-                          <span className="inline-flex items-center gap-1 rounded bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold text-brand-800 dark:bg-brand-900/50 dark:text-brand-300">
-                            Rank #{selectedCandidate + 1}
-                          </span>
+                      {/* AI Score Profile */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            AI Score Profile
+                          </p>
+                          <p className="mt-0.5 truncate text-sm font-semibold text-slate-900 dark:text-white">
+                            {active.name}
+                          </p>
                         </div>
+                        <span className="shrink-0 rounded-md bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold text-brand-800 dark:bg-brand-900/50 dark:text-brand-300">
+                          Rank #{selectedCandidate + 1}
+                        </span>
+                      </div>
 
-                        <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                          {mockCandidates[selectedCandidate].name}
-                        </p>
-
-                        <div className="mt-3.5 space-y-2.5">
-                          {/* GitHub stat */}
-                          <div>
-                            <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                              <span className="flex items-center gap-1">
-                                <Code2 className="h-3 w-3" /> GitHub Metric
-                              </span>
-                              <span>{mockCandidates[selectedCandidate].metrics.git}%</span>
-                            </div>
-                            <div className="mt-1 h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800">
-                              <div
-                                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                                style={{ width: `${mockCandidates[selectedCandidate].metrics.git}%` }}
-                              />
-                            </div>
-                            <p className="mt-0.5 text-[9px] text-slate-400">
-                              {mockCandidates[selectedCandidate].github}
+                      <div className="mt-2.5 flex items-center gap-3 rounded-lg border border-slate-200/80 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                              Suitability score
                             </p>
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
                           </div>
-
-                          {/* LeetCode stat */}
-                          <div>
-                            <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                              <span className="flex items-center gap-1">
-                                <Code2 className="h-3 w-3" /> LeetCode score
-                              </span>
-                              <span>{mockCandidates[selectedCandidate].metrics.code}%</span>
-                            </div>
-                            <div className="mt-1 h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800">
-                              <div
-                                className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                                style={{ width: `${mockCandidates[selectedCandidate].metrics.code}%` }}
-                              />
-                            </div>
-                            <p className="mt-0.5 text-[9px] text-slate-400">
-                              {mockCandidates[selectedCandidate].leetcode}
-                            </p>
+                          <div className="mt-0.5 flex items-baseline gap-1">
+                            <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">
+                              {active.score}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-400">/100</span>
                           </div>
-
-                          {/* CV Match stat */}
-                          <div>
-                            <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                              <span className="flex items-center gap-1">
-                                <FileText className="h-3 w-3" /> CV analysis
-                              </span>
-                              <span>{mockCandidates[selectedCandidate].metrics.cv}%</span>
-                            </div>
-                            <div className="mt-1 h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800">
-                              <div
-                                className="h-full rounded-full bg-violet-500 transition-all duration-500"
-                                style={{ width: `${mockCandidates[selectedCandidate].metrics.cv}%` }}
-                              />
-                            </div>
-                            <p className="mt-0.5 text-[9px] text-slate-400">
-                              {mockCandidates[selectedCandidate].cvMatch}
-                            </p>
+                          <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
+                            <div
+                              className="h-full rounded-full bg-brand-600 transition-all duration-500"
+                              style={{ width: `${Math.min(100, active.score)}%` }}
+                            />
                           </div>
+                          <p className="mt-1 text-[9px] leading-snug text-slate-400">
+                            One XGBoost prediction from a 12-feature vector
+                          </p>
                         </div>
                       </div>
 
-                      <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
-                        <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                          <CheckCircle2 className="h-3 w-3" /> Verified by XGBoost model
+                      {/* Profile Summary — stacked source rows, no cramped columns */}
+                      <div className="mt-2.5 rounded-lg border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900">
+                        <div className="border-b border-slate-100 px-3 py-1.5 dark:border-slate-800">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            Profile Summary
+                          </p>
+                        </div>
+
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                          <div className="px-3 py-2">
+                            <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                              <GitBranch className="h-3 w-3 shrink-0" />
+                              GitHub
+                            </p>
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {[
+                                { label: 'Followers', value: active.github.followers },
+                                { label: 'Repos', value: active.github.repos },
+                                { label: 'Languages', value: active.github.languages },
+                                { label: 'Age (days)', value: active.github.ageDays },
+                              ].map((s) => (
+                                <div
+                                  key={s.label}
+                                  className="min-w-0 rounded-md bg-slate-50 px-1.5 py-1.5 text-center dark:bg-slate-950/70"
+                                >
+                                  <p className="truncate text-[11px] font-bold tabular-nums text-slate-900 dark:text-white">
+                                    {s.value}
+                                  </p>
+                                  <p className="mt-0.5 truncate text-[8px] leading-none text-slate-400">
+                                    {s.label}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="px-3 py-2">
+                            <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                              <Code2 className="h-3 w-3 shrink-0 text-amber-600" />
+                              LeetCode
+                            </p>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {[
+                                { label: 'Easy', value: active.leetcode.easy },
+                                { label: 'Medium', value: active.leetcode.medium },
+                                { label: 'Hard', value: active.leetcode.hard },
+                              ].map((s) => (
+                                <div
+                                  key={s.label}
+                                  className="min-w-0 rounded-md bg-slate-50 px-1.5 py-1.5 text-center dark:bg-slate-950/70"
+                                >
+                                  <p className="truncate text-[11px] font-bold tabular-nums text-slate-900 dark:text-white">
+                                    {s.value}
+                                  </p>
+                                  <p className="mt-0.5 truncate text-[8px] leading-none text-slate-400">
+                                    {s.label}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="px-3 py-2">
+                            <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                              <FileText className="h-3 w-3 shrink-0 text-brand-600" />
+                              Resume
+                            </p>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {[
+                                { label: 'Skills', value: active.cv.skills },
+                                { label: 'Projects', value: active.cv.projects },
+                                { label: 'CGPA', value: active.cv.cgpa },
+                              ].map((s) => (
+                                <div
+                                  key={s.label}
+                                  className="min-w-0 rounded-md bg-slate-50 px-1.5 py-1.5 text-center dark:bg-slate-950/70"
+                                >
+                                  <p className="truncate text-[11px] font-bold tabular-nums text-slate-900 dark:text-white">
+                                    {s.value}
+                                  </p>
+                                  <p className="mt-0.5 truncate text-[8px] leading-none text-slate-400">
+                                    {s.label}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </motion.div>

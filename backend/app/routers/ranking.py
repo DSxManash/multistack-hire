@@ -1,6 +1,9 @@
 # backend/app/routers/ranking.py
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.dependencies import get_db
@@ -21,6 +24,38 @@ def require_role(allowed: list[UserRole]):
             )
         return current_user
     return checker
+
+
+def _candidate_payload(
+    candidate: User,
+    *,
+    score=None,
+    shap=None,
+    include_scores: bool = True,
+) -> dict:
+    """Build candidate dict. When include_scores is False, hide recruiter AI fields."""
+    if include_scores:
+        ranking_score = score if score is not None else candidate.ranking_score
+        shap_breakdown = (
+            shap
+            if shap is not None
+            else (json.loads(candidate.shap_values) if candidate.shap_values else None)
+        )
+    else:
+        ranking_score = None
+        shap_breakdown = None
+
+    return {
+        "id": candidate.id,
+        "full_name": candidate.full_name,
+        "email": candidate.email,
+        "ranking_score": ranking_score,
+        "github_username": candidate.github_username,
+        "leetcode_username": candidate.leetcode_username,
+        "has_resume": bool(candidate.resume_url),
+        "skills": candidate.get_skills(),
+        "shap_breakdown": shap_breakdown,
+    }
 
 
 @router.post("/score/me")
@@ -62,12 +97,13 @@ async def get_ranked_applicants(
     current_user: User = Depends(require_role([UserRole.recruiter])),
 ):
     """
-    Recruiter gets all applicants for a job ranked by ML score.
+    Recruiter gets all applicants for a job.
+    AI scores are only returned after this job has been ranked
+    (jobs.applicants_ranked_at is set).
     """
     from app.models.job import Application, Job
     from sqlalchemy.orm import selectinload
 
-    # Verify job belongs to recruiter
     job_result = await db.execute(
         select(Job).where(
             Job.id == job_id,
@@ -78,7 +114,6 @@ async def get_ranked_applicants(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # Get applications with candidate data
     apps_result = await db.execute(
         select(Application)
         .options(selectinload(Application.candidate))
@@ -86,7 +121,8 @@ async def get_ranked_applicants(
     )
     applications = apps_result.scalars().all()
 
-    # Build ranked list
+    is_ranked = job.applicants_ranked_at is not None
+
     ranked = []
     for app in applications:
         candidate = app.candidate
@@ -94,31 +130,85 @@ async def get_ranked_applicants(
             "application_id": app.id,
             "status": app.status.value,
             "applied_at": app.applied_at,
-            "candidate": {
-                "id": candidate.id,
-                "full_name": candidate.full_name,
-                "email": candidate.email,
-                "ranking_score": candidate.ranking_score,
-                "github_username": candidate.github_username,
-                "leetcode_username": candidate.leetcode_username,
-                "skills": candidate.get_skills(),
-                "shap_breakdown": json.loads(candidate.shap_values)
-                    if candidate.shap_values else None,
-            }
+            "candidate": _candidate_payload(
+                candidate,
+                include_scores=is_ranked,
+            ),
         })
 
-    # Sort by ranking score descending (unscored at bottom)
-    ranked.sort(
-        key=lambda x: x["candidate"]["ranking_score"] or -1,
-        reverse=True
-    )
+    if is_ranked:
+        ranked.sort(
+            key=lambda x: (
+                x["candidate"]["ranking_score"]
+                if x["candidate"]["ranking_score"] is not None
+                else -1
+            ),
+            reverse=True,
+        )
 
     return {
         "job_id": job_id,
         "job_title": job.title,
         "total_applicants": len(ranked),
+        "ranked": is_ranked,
         "applicants": ranked,
     }
+
+
+@router.get("/job/{job_id}/applicant/{application_id}/resume")
+async def get_applicant_resume(
+    job_id: str,
+    application_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.recruiter])),
+):
+    """
+    Stream an applicant's resume for the owning recruiter.
+    Uses internal MinIO so the browser never needs a public presigned URL.
+    """
+    from app.models.job import Application, Job
+    from sqlalchemy.orm import selectinload
+    from app.utils.minio_client import get_resume_bytes
+
+    job_result = await db.execute(
+        select(Job).where(
+            Job.id == job_id,
+            Job.recruiter_id == current_user.id,
+        )
+    )
+    job = job_result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    app_result = await db.execute(
+        select(Application)
+        .options(selectinload(Application.candidate))
+        .where(
+            Application.id == application_id,
+            Application.job_id == job_id,
+        )
+    )
+    application = app_result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    object_name = application.candidate.resume_url
+    if not object_name:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    try:
+        data, content_type = await get_resume_bytes(object_name)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Resume not found") from None
+
+    return Response(
+        content=data,
+        media_type=content_type or "application/pdf",
+        headers={
+            "Content-Disposition": 'inline; filename="resume.pdf"',
+            "Cache-Control": "private, max-age=300",
+        },
+    )
 
 
 @router.post("/score/all")
@@ -129,7 +219,7 @@ async def score_all(
     """Admin triggers scoring for all candidates with complete profiles."""
     return await score_all_candidates(db)
 
-# add route to score all applicants for a specific job
+
 @router.post("/score/job/{job_id}")
 async def score_job_applicants(
     job_id: str,
@@ -138,12 +228,11 @@ async def score_job_applicants(
 ):
     """
     Recruiter scores ALL candidates who applied to their job.
-    Returns scored + ranked list.
+    Marks the job as ranked so GET returns AI scores thereafter.
     """
     from app.models.job import Application, Job
     from sqlalchemy.orm import selectinload
 
-    # Verify job belongs to recruiter
     job_result = await db.execute(
         select(Job).where(
             Job.id == job_id,
@@ -154,7 +243,6 @@ async def score_job_applicants(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # Get all applicants
     apps_result = await db.execute(
         select(Application)
         .options(selectinload(Application.candidate))
@@ -171,39 +259,56 @@ async def score_job_applicants(
             failed.append({
                 "id": candidate.id,
                 "name": candidate.full_name,
-                "error": "Profile incomplete"
+                "error": "Profile incomplete",
             })
             continue
         try:
-            from app.services.ranking_service import score_candidate
             result = await score_candidate(candidate, db)
             scored.append({
                 "application_id": app.id,
                 "status": app.status.value,
-                "candidate": {
-                    "id": candidate.id,
-                    "full_name": candidate.full_name,
-                    "email": candidate.email,
-                    "ranking_score": result["score"],
-                    "github_username": candidate.github_username,
-                    "leetcode_username": candidate.leetcode_username,
-                    "skills": candidate.get_skills(),
-                    "shap_breakdown": result.get("shap_breakdown"),
-                },
+                "candidate": _candidate_payload(
+                    candidate,
+                    score=result["score"],
+                    shap=result.get("shap_breakdown"),
+                    include_scores=True,
+                ),
                 "applied_at": app.applied_at.isoformat(),
             })
         except Exception as e:
             failed.append({
                 "id": candidate.id,
                 "name": candidate.full_name,
-                "error": str(e)
+                "error": str(e),
             })
 
-    # Sort by score descending
     scored.sort(
-        key=lambda x: x["candidate"]["ranking_score"] or -1,
-        reverse=True
+        key=lambda x: (
+            x["candidate"]["ranking_score"]
+            if x["candidate"]["ranking_score"] is not None
+            else -1
+        ),
+        reverse=True,
     )
+
+    scored_ids = {entry["candidate"]["id"] for entry in scored}
+    remaining = []
+    for app in applications:
+        candidate = app.candidate
+        if candidate.id in scored_ids:
+            continue
+        remaining.append({
+            "application_id": app.id,
+            "status": app.status.value,
+            "candidate": _candidate_payload(candidate, include_scores=True),
+            "applied_at": app.applied_at.isoformat() if app.applied_at else None,
+        })
+
+    applicants = scored + remaining
+
+    # Job-level gate: recruiter has run Rank Candidates for this job
+    job.applicants_ranked_at = datetime.utcnow()
+    await db.flush()
 
     return {
         "job_id": job_id,
@@ -211,6 +316,7 @@ async def score_job_applicants(
         "total": len(applications),
         "scored": len(scored),
         "failed": len(failed),
-        "applicants": scored,
+        "ranked": True,
+        "applicants": applicants,
         "failures": failed,
     }

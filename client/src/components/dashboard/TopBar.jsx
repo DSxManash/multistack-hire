@@ -18,14 +18,16 @@ const pageTitles = {
   '/candidate/applications': 'My Applications',
   '/recruiter/dashboard':  'Dashboard',
   '/recruiter/jobs':       'Job Postings',
+  '/recruiter/jobs/application': 'Job Applications',
   '/recruiter/company':    'Company Profile',
   '/recruiter/search':     'Candidate Search',
-  '/recruiter/shortlist':  'Shortlist',
+  '/recruiter/shortlistd': 'Shortlisted',
+  '/recruiter/shortlist':  'Shortlisted',
   '/admin/dashboard':      'Dashboard',
   '/admin/users':          'User Management',
   '/admin/model':          'ML Model',
   '/admin/model/retrain':  'Retrain Model',
-  '/admin/login':          'Admin Login',
+  '/admin':                'Admin Login',
 }
 
 const roleMenuItems = {

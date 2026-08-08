@@ -3,19 +3,10 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Layers, Mail, Lock, Eye, EyeOff, AlertCircle, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { getRoleDashboard } from '../../lib/roleHome'
 import { fadeUp } from '../../components/landing/motion'
 import Button from '../../components/ui/Button'
 import BackButton from '../../components/ui/BackButton'
-
-// Maps role to their dashboard path
-function getRoleDashboard(role) {
-  const map = {
-    admin: '/admin/dashboard',
-    recruiter: '/recruiter/dashboard',
-    candidate: '/candidate/dashboard',
-  }
-  return map[role] ?? '/'
-}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -208,7 +199,7 @@ export default function LoginPage() {
               </div>
             </div> */}
             {/* <Link
-              to="/admin/login"
+              to="/admin"
               className="flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
             >
               <ShieldCheck className="h-4 w-4" />

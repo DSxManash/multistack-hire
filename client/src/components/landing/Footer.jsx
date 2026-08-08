@@ -5,16 +5,15 @@ const footerLinks = {
   Platform: [
     { label: 'Features', href: '#features' },
     { label: 'Workflow', href: '#workflow' },
-    { label: 'ML Architecture', href: '#about' },
   ],
   Account: [
     { label: 'Login', href: '/login' },
     { label: 'Register', href: '/register' },
-    // { label: 'Admin Login', href: '/admin/login' },
+    // { label: 'Admin Login', href: '/admin' },
     { label: 'Get Started', href: '/register' },
   ],
   Project: [
-    { label: 'About', href: '#about' },
+    { label: 'About', href: '#home' },
     { label: 'Documentation', href: '#' },
     { label: 'Contact', href: 'mailto:team@multistackhire.dev' },
   ],

@@ -13,18 +13,10 @@ import {
   EyeOff,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { getRoleDashboard } from '../../lib/roleHome'
 import { fadeUp } from '../../components/landing/motion'
 import Button from '../../components/ui/Button'
 import BackButton from '../../components/ui/BackButton'
-
-function getRoleDashboard(role) {
-  const map = {
-    admin: '/admin/dashboard',
-    recruiter: '/recruiter/dashboard',
-    candidate: '/candidate/dashboard',
-  }
-  return map[role] ?? '/'
-}
 
 export default function RegisterPage() {
   const navigate = useNavigate()

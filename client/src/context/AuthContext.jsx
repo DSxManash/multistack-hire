@@ -30,35 +30,53 @@ function getAuthErrorMessage(err, fallbackMessage) {
   return fallbackMessage
 }
 
+function readCachedUser() {
+  try {
+    const raw = localStorage.getItem('user')
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }) {
-  // Core auth state
   const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(true) 
+  // Boot hydration (token + /auth/me) — route guards wait on this
+  const [isInitializing, setIsInitializing] = useState(true)
+  // Login / register form submit only
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-
-  const isAuthenticated = !!user  
+  const isAuthenticated = !!user
 
   useEffect(() => {
     async function loadUserFromStorage() {
       const token = localStorage.getItem('access_token')
 
       if (!token) {
-        setIsLoading(false)
+        setUser(null)
+        setIsInitializing(false)
         return
       }
 
+      // Seed from cache so protected routes don't flash as logged-out
+      const cached = readCachedUser()
+      if (cached) {
+        setUser(cached)
+      }
+
       try {
-       
         const userData = await getCurrentUser()
         setUser(userData)
+        localStorage.setItem('user', JSON.stringify(userData))
       } catch {
-       
         localStorage.removeItem('access_token')
         localStorage.removeItem('user')
         setUser(null)
       } finally {
-        setIsLoading(false)
+        setIsInitializing(false)
       }
     }
 
@@ -71,27 +89,22 @@ export function AuthProvider({ children }) {
     setIsLoading(true)
 
     try {
-  
       const data = await loginUser(credentials)
 
-      // Store token so axiosInstance can attach it to future requests
       localStorage.setItem('access_token', data.access_token)
       localStorage.setItem('user', JSON.stringify(data.user))
-
-      // Update React state → triggers re-render → UI updates
       setUser(data.user)
 
-      return data.user  
+      return data.user
     } catch (err) {
       const message = getAuthErrorMessage(err, 'Login failed. Please check your email and password.')
       setError(message)
-      throw err  
+      throw err
     } finally {
       setIsLoading(false)
     }
   }, [])
 
-  // ── Register ────────────────────────────────────────────────────
   const register = useCallback(async (userData) => {
     setError(null)
     setIsLoading(true)
@@ -113,7 +126,6 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  // ── Logout ──────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
       await logoutUser()
@@ -128,12 +140,12 @@ export function AuthProvider({ children }) {
     window.location.href = appPath('/login')
   }, [])
 
-  // ── Clear error ─────────────────────────────────────────────────
   const clearError = useCallback(() => setError(null), [])
 
   const value = {
-    user,          
+    user,
     isAuthenticated,
+    isInitializing,
     isLoading,
     error,
     login,

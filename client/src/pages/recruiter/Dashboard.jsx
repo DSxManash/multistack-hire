@@ -371,7 +371,7 @@ export default function RecruiterDashboard() {
               </p>
               <div className="space-y-3">
                 <Link
-                  to="/recruiter/shortlist"
+                  to="/recruiter/shortlistd"
                   className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-brand-700 dark:hover:bg-slate-800/50"
                 >
                   <div className="flex items-center gap-3">
@@ -380,7 +380,7 @@ export default function RecruiterDashboard() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        View Shortlist
+                        View Shortlisted
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         Review saved candidates

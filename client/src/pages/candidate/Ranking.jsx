@@ -350,23 +350,6 @@ export default function CandidateRanking() {
         </div>
       )}
 
-      {/* How Scoring Works – full width with three cards */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">How Scoring Works</h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            { icon: Github, label: 'GitHub (35%)', desc: 'Followers, repos, language diversity, account age', color: 'bg-slate-50 dark:bg-slate-900' },
-            { icon: Code2, label: 'LeetCode (35%)', desc: 'Easy, medium, hard problems solved and weighted', color: 'bg-amber-50 dark:bg-amber-950/30' },
-            { icon: FileText, label: 'Resume (30%)', desc: 'Skills, projects, internships, certifications, CGPA', color: 'bg-brand-50 dark:bg-brand-950/30' },
-          ].map(item => (
-            <div key={item.label} className={`rounded-lg p-4 transition-all hover:-translate-y-1 hover:shadow-md ${item.color}`}>
-              <item.icon className="h-5 w-5 text-slate-600 dark:text-slate-400 mb-2" strokeWidth={1.75} />
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">{item.label}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

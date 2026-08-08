@@ -1,11 +1,9 @@
 import { motion } from 'framer-motion'
 import {
-  ArrowRight,
-  BarChart3,
   Trophy,
-  SlidersHorizontal,
   Database,
   Cpu,
+  Layers,
 } from 'lucide-react'
 import { fadeUp, staggerContainer } from './motion'
 
@@ -13,31 +11,25 @@ const steps = [
   {
     icon: Database,
     title: 'Data Ingestion',
-    description: 'Integrates public profiles from GitHub and LeetCode, and parses uploaded CV text content.',
+    description: 'Pulls public GitHub and LeetCode profiles and loads the candidate’s uploaded CV from MinIO storage.',
     label: 'Data Sources'
   },
   {
-    icon: SlidersHorizontal,
+    icon: Layers,
     title: 'Feature Extraction',
-    description: 'Extracts and normalizes multi-source coding signals into clean numerical vectors.',
+    description: 'Normalizes multi-source signals into the fixed 12-feature vector used by the ranking model.',
     label: 'Feature Engineering'
-  },
-  {
-    icon: BarChart3,
-    title: 'Weight Assessment',
-    description: 'Calculates customizable weights across individual components to model role priorities.',
-    label: 'Score Generation'
   },
   {
     icon: Cpu,
     title: 'XGBoost Prediction',
-    description: 'Passes normalized feature vectors through trained models to calculate suitability logits.',
+    description: 'Runs the trained gradient-boosting model to produce a 0–100 suitability score for the profile.',
     label: 'Model Inference'
   },
   {
     icon: Trophy,
     title: 'Talent Ranking',
-    description: 'Sorts all candidates dynamically, producing a transparent and queryable shortlist.',
+    description: 'Recruiters rank job applicants by AI score; results are sorted by the stored suitability score.',
     label: 'Candidate Ranking'
   },
 ]
