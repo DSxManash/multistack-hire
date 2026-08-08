@@ -138,12 +138,19 @@ export default function CandidateDashboard() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getCandidateStats(), getProfileCompletion()])
-      .then(([statsData, completionData]) => {
-        setStats(statsData)
-        setCompletion(completionData)
+    let isMounted = true
+    Promise.allSettled([getCandidateStats(), getProfileCompletion()])
+      .then(([statsRes, completionRes]) => {
+        if (!isMounted) return
+        if (statsRes.status === 'fulfilled') setStats(statsRes.value)
+        if (completionRes.status === 'fulfilled') setCompletion(completionRes.value)
       })
-      .finally(() => setIsLoading(false))
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const statCards = [

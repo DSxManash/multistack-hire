@@ -1,8 +1,9 @@
 // client/src/pages/recruiter/Jobs.jsx
 
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom' // ✅ Added
-import { createJob, getMyJobs, closeJob } from '../../api/jobApi' // ✅ Cleaned imports
+import { useNavigate } from 'react-router-dom'
+import { createJob, getMyJobs, closeJob } from '../../api/jobApi'
+import { getMyCompany } from '../../api/companyApi'
 import {
   Plus, Briefcase, MapPin, Users, Calendar,
   X, Loader2, CheckCircle2, AlertCircle,
@@ -26,11 +27,25 @@ function PostJobModal({ onClose, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
+  useEffect(() => {
+    getMyCompany()
+      .then((comp) => {
+        if (comp) {
+          setForm(prev => ({
+            ...prev,
+            company_name: prev.company_name || comp.name || '',
+            location: prev.location || comp.address || '',
+          }))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   function handleChange(e) {
     const { name, value } = e.target
     setForm(prev => ({
       ...prev,
-      [name]: name === 'application_deadline' ? (value || null) : value,
+      [name]: value,
     }))
   }
 
@@ -38,12 +53,36 @@ function PostJobModal({ onClose, onSuccess }) {
     e.preventDefault()
     setIsSubmitting(true)
     setError(null)
+
+    const deadlineValue = form.application_deadline && typeof form.application_deadline === 'string'
+      ? form.application_deadline.trim()
+      : null
+
+    const payload = {
+      title: form.title.trim(),
+      company_name: form.company_name.trim(),
+      location: form.location.trim(),
+      job_type: form.job_type,
+      description: form.description.trim(),
+      requirements: form.requirements.trim(),
+      application_deadline: deadlineValue || null
+    }
+
     try {
-      const job = await createJob(form)
+      const job = await createJob(payload)
       onSuccess(job)
       onClose()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to post job')
+      const detail = err.response?.data?.detail
+      let msg = 'Failed to post job'
+      if (typeof detail === 'string') {
+        msg = detail
+      } else if (Array.isArray(detail)) {
+        msg = detail.map(d => (d.msg ? `${d.loc ? d.loc.join(' -> ') + ': ' : ''}${d.msg}` : JSON.stringify(d))).join('; ')
+      } else if (detail && typeof detail === 'object') {
+        msg = JSON.stringify(detail)
+      }
+      setError(msg)
     } finally {
       setIsSubmitting(false)
     }
