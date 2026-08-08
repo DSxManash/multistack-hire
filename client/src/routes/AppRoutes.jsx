@@ -1,5 +1,7 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { getRoleDashboard } from '../lib/roleHome'
 
 import ProtectedRoute from './ProtectedRoute'
 import RoleRoute from './RoleRoute'
@@ -14,6 +16,7 @@ import LoginPage from '../pages/public/LoginPage'
 import RegisterPage from '../pages/public/RegisterPage'
 import AdminLoginPage from '../pages/public/AdminLoginPage'
 import AboutPage from '../pages/public/AboutPage'
+import NotFoundPage from '../pages/public/NotFoundPage'
 
 import AdminDashboard from '../pages/admin/Dashboard'
 import UserManagement from '../pages/admin/UserManagement'
@@ -36,45 +39,82 @@ import CandidateApplications from '../pages/candidate/Applications'
 
 import JobApplications from '../pages/recruiter/JobApplications'
 
-function getRoleDashboard(role) {
-  const dashboards = {
-    admin: '/admin/dashboard',
-    recruiter: '/recruiter/dashboard',
-    candidate: '/candidate/dashboard',
-  }
-  return dashboards[role] ?? '/'
+const ACTIVE_JOB_STORAGE_KEY = 'recruiterActiveJobId'
+
+function AuthBootSpinner() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
+    </div>
+  )
+}
+
+/** Old UUID URLs → store job id privately and open the stable applications route. */
+function LegacyJobApplicationsRedirect() {
+  const { jobId } = useParams()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (jobId) {
+      sessionStorage.setItem(ACTIVE_JOB_STORAGE_KEY, jobId)
+      navigate('/recruiter/jobs/application', {
+        replace: true,
+        state: { jobId },
+      })
+      return
+    }
+    navigate('/recruiter/jobs', { replace: true })
+  }, [jobId, navigate])
+
+  return null
 }
 
 export default function AppRoutes() {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, isInitializing, user } = useAuth()
+
+  if (isInitializing) {
+    return <AuthBootSpinner />
+  }
 
   return (
     <Routes>
       {/* Public */}
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<LandingPage />} />
+        <Route
+          path="/"
+          element={
+            isAuthenticated
+              ? <Navigate to={getRoleDashboard(user?.role)} replace />
+              : <LandingPage />
+          }
+        />
         <Route path="/about" element={<AboutPage />} />
         <Route
           path="/login"
-          element={isAuthenticated
-            ? <Navigate to={getRoleDashboard(user?.role)} replace />
-            : <LoginPage />}
+          element={
+            isAuthenticated
+              ? <Navigate to={getRoleDashboard(user?.role)} replace />
+              : <LoginPage />
+          }
         />
         <Route
           path="/register"
-          element={isAuthenticated
-            ? <Navigate to={getRoleDashboard(user?.role)} replace />
-            : <RegisterPage />}
+          element={
+            isAuthenticated
+              ? <Navigate to={getRoleDashboard(user?.role)} replace />
+              : <RegisterPage />
+          }
         />
       </Route>
       <Route
-        path="/admin/login"
+        path="/admin"
         element={
           isAuthenticated && user?.role === 'admin'
             ? <Navigate to="/admin/dashboard" replace />
             : <AdminLoginPage />
         }
       />
+      <Route path="/admin/login" element={<Navigate to="/admin" replace />} />
 
       {/* Protected */}
       <Route element={<ProtectedRoute />}>
@@ -92,20 +132,30 @@ export default function AppRoutes() {
         {/* Recruiter */}
         <Route element={<RoleRoute allowedRoles={['recruiter']} />}>
           <Route element={<RecruiterLayout />}>
+            <Route path="/recruiter" element={<Navigate to="/recruiter/dashboard" replace />} />
             <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
             <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
+            <Route path="/recruiter/jobs/application" element={<JobApplications />} />
+            <Route
+              path="/recruiter/jobs/:jobId/applications/*"
+              element={<LegacyJobApplicationsRedirect />}
+            />
+            <Route
+              path="/recruiter/jobs/:jobId/applications"
+              element={<LegacyJobApplicationsRedirect />}
+            />
             <Route path="/recruiter/search" element={<CandidateSearch />} />
             <Route path="/recruiter/candidates/:id" element={<CandidateDetails />} />
-            <Route path="/recruiter/shortlist" element={<Shortlist />} />
+            <Route path="/recruiter/shortlistd" element={<Shortlist />} />
+            <Route path="/recruiter/shortlist" element={<Navigate to="/recruiter/shortlistd" replace />} />
             <Route path="/recruiter/company" element={<RecruiterCompany />} />
-            <Route path="/recruiter/jobs/:jobId/applications" element={<JobApplications />} />
-            <Route path="/recruiter/jobs/:jobId/applications/*" element={<JobApplications />} />
           </Route>
         </Route>
 
         {/* Candidate */}
         <Route element={<RoleRoute allowedRoles={['candidate']} />}>
           <Route element={<CandidateLayout />}>
+            <Route path="/candidate" element={<Navigate to="/candidate/dashboard" replace />} />
             <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
             <Route path="/candidate/jobs" element={<CandidateJobs />} />
             <Route path="/candidate/profile" element={<Profile />} />
@@ -118,7 +168,7 @@ export default function AppRoutes() {
 
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

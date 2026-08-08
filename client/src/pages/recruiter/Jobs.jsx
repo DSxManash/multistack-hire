@@ -315,7 +315,12 @@ export default function RecruiterJobs() {
                   
                   
                   <button
-                    onClick={() => navigate(`/recruiter/jobs/${job.id}/applications`, { replace: false })}
+                    onClick={() => {
+                      sessionStorage.setItem('recruiterActiveJobId', job.id)
+                      navigate('/recruiter/jobs/application', {
+                        state: { jobId: job.id, jobTitle: job.title },
+                      })
+                    }}
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     View Applications

@@ -35,6 +35,18 @@ async def log_startup() -> None:
         print(f"[cors] allow_origin_regex={settings.CORS_ORIGIN_REGEX}")
     print(f"[db] ssl={settings.use_database_ssl} verify=disabled env={settings.APP_ENV}")
 
+    # Ensure resume (and other file) bucket exists before serving uploads
+    try:
+        from app.utils.minio_client import ensure_storage_ready
+
+        info = await ensure_storage_ready()
+        print(
+            f"[minio] bucket={info['bucket']} ready "
+            f"(created={info.get('created', False)})"
+        )
+    except Exception as exc:  # noqa: BLE001 — don't block API boot if MinIO is briefly down
+        print(f"[minio] bucket init failed: {type(exc).__name__}: {exc}")
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
@@ -91,6 +103,30 @@ async def health_db():
             content={
                 "status": "error",
                 "ssl": settings.use_database_ssl,
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:400],
+            },
+        )
+
+
+@app.get("/health/storage", tags=["Health"])
+async def health_storage():
+    """Diagnose MinIO connectivity and ensure the app bucket exists."""
+    from app.utils.minio_client import ensure_storage_ready
+
+    try:
+        result = await ensure_storage_ready()
+        return {
+            "status": "ok",
+            "bucket": result["bucket"],
+            "bucket_exists": True,
+            "created": result.get("created", False),
+        }
+    except Exception as exc:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
                 "error_type": type(exc).__name__,
                 "error": str(exc)[:400],
             },

@@ -5,7 +5,6 @@ import {
   FileText,
   Code2,
   GitBranch,
-  Eye,
 } from 'lucide-react'
 
 import { fadeUp, staggerContainer } from './motion'
@@ -15,43 +14,36 @@ const features = [
     icon: GitBranch,
     title: 'GitHub Analysis',
     description:
-      'Extracts repository quality, commit frequency, language diversity, and open-source impact to quantify real-world developer contributions.',
+      'Reads public GitHub profiles to capture followers, public repositories, language diversity, and account age for scoring.',
     tag: 'GitHub API'
   },
   {
     icon: Code2,
     title: 'LeetCode Analytics',
     description:
-      'Measures algorithmic efficiency, data structures expertise, and coding pace across easy, medium, and hard problem sets.',
+      'Collects solved problem counts across easy, medium, and hard tiers from public LeetCode profiles as model inputs.',
     tag: 'LeetCode API'
   },
   {
     icon: FileText,
     title: 'Resume CV Parsing',
     description:
-      'Extracts technical skills, years of experience, and educational background from resumes using specialized NLP text filters.',
+      'Parses uploaded PDF resumes with NLP to count skills, projects, internships, certifications, and CGPA signals.',
     tag: 'NLP Parser'
   },
   {
     icon: BarChart3,
     title: 'Candidate Scoring',
     description:
-      'Aggregates disparate signals (GitHub, LeetCode, CV) into a standardized multi-dimensional feature vector for bias-free ranking.',
+      'Combines GitHub, LeetCode, and CV signals into a fixed 12-feature vector used by the ranking model.',
     tag: 'Data Pipeline'
   },
   {
     icon: Cpu,
-    title: 'XGBoost Classification',
+    title: 'XGBoost Scoring',
     description:
-      'Utilizes a trained gradient boosting model to predict recruiter suitability scores with high calibration accuracy.',
+      'Runs a trained gradient-boosting model to predict a 0–100 suitability score for each candidate profile.',
     tag: 'Machine Learning'
-  },
-  {
-    icon: Eye,
-    title: 'Explainable AI Profiles',
-    description:
-      'Provides clear visual feedback on which metrics (e.g. commits, problem-solving, CV terms) drove the candidate’s final rank.',
-    tag: 'Transparency'
   },
 ]
 
@@ -81,8 +73,8 @@ export default function Features() {
             End-to-end Candidate Intelligence
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-400">
-            Every developer profile is transformed into clean, actionable, and
-            explainable suitability metrics through our automated ML evaluation pipeline.
+            Every developer profile is turned into structured signals and a
+            suitability score through our automated ML evaluation pipeline.
           </p>
         </motion.div>
 

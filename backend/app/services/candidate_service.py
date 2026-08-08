@@ -66,7 +66,9 @@ class CandidateService:
             try:
                 data.resume_url = await get_resume_url(user.resume_url)
             except Exception:
-                data.resume_url = None
+                # Keep object key so UI still treats resume as uploaded;
+                # browser preview uses the authenticated /candidate/resume proxy.
+                data.resume_url = user.resume_url
 
         return data
 

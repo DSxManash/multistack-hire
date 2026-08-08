@@ -7,7 +7,6 @@ const navLinks = [
   { label: 'Home', href: '#home' },
   { label: 'Features', href: '#features' },
   { label: 'Workflow', href: '#workflow' },
-  { label: 'Architecture', href: '#about' },
 ]
 
 export default function Navbar({ theme, onToggleTheme }) {

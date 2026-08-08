@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
-  getProfile, updateProfile, uploadResume, getProfileCompletion
+  getProfile, updateProfile, uploadResume, getProfileCompletion, getMyResumeBlob
 } from '../../api/candidateApi'
 import * as Icons from 'lucide-react'
 
@@ -26,8 +26,46 @@ const {
   Loader2,
   ExternalLink,
   Save,
-  ShieldAlert
+  ShieldAlert,
+  Eye,
 } = Icons
+
+function CvPreviewModal({ url, onClose }) {
+  if (!url) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+              Your Resume / CV
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">PDF preview</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Open in tab
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label="Close CV preview"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        <iframe title="CV preview" src={url} className="h-full w-full bg-slate-100 dark:bg-slate-900" />
+      </div>
+    </div>
+  )
+}
 
 function normalizeGithubUsername(value) {
   if (!value) return ''
@@ -189,11 +227,21 @@ export default function CandidateProfile() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isPreviewing, setIsPreviewing] = useState(false)
+  const [cvPreviewUrl, setCvPreviewUrl] = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
   const [error, setError] = useState(null)
 
   const fromApply = location.state?.fromApply ?? false
   const applyMissing = location.state?.missing ?? []
+
+  const hasResume = Boolean(profile?.resume_url || profile?.resume_uploaded_at)
+
+  useEffect(() => {
+    return () => {
+      if (cvPreviewUrl) URL.revokeObjectURL(cvPreviewUrl)
+    }
+  }, [cvPreviewUrl])
 
   const [form, setForm] = useState({
     phone_number: '',
@@ -279,7 +327,33 @@ export default function CandidateProfile() {
       setError(err.response?.data?.detail || 'Failed to upload resume')
     } finally {
       setIsUploading(false)
+      e.target.value = ''
     }
+  }
+
+  async function handlePreviewResume() {
+    setIsPreviewing(true)
+    setError(null)
+    try {
+      const blob = await getMyResumeBlob()
+      const url = URL.createObjectURL(blob)
+      setCvPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev)
+        return url
+      })
+    } catch {
+      setError('Could not load resume preview')
+      setTimeout(() => setError(null), 3000)
+    } finally {
+      setIsPreviewing(false)
+    }
+  }
+
+  function closeCvPreview() {
+    setCvPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
   }
 
   if (isLoading) {
@@ -496,7 +570,7 @@ export default function CandidateProfile() {
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <FileText className="h-4 w-4 text-brand-600" />
             Resume / CV
-            {!profile?.resume_url && (
+            {!hasResume && (
               <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-950 dark:text-red-400">
                 Required
               </span>
@@ -506,11 +580,11 @@ export default function CandidateProfile() {
             PDF only, maximum 5MB. Used for AI-powered resume parsing.
           </p>
 
-          {profile?.resume_url ? (
-            <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
-                <div>
+          {hasResume ? (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
+              <div className="flex min-w-0 items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
+                <div className="min-w-0">
                   <p className="text-sm font-medium text-green-700 dark:text-green-400">
                     Resume uploaded
                   </p>
@@ -523,13 +597,26 @@ export default function CandidateProfile() {
                   )}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-xs font-medium text-green-700 hover:underline dark:text-green-400"
-              >
-                Replace
-              </button>
+              <div className="flex shrink-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handlePreviewResume}
+                  disabled={isPreviewing}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-green-700 hover:underline disabled:opacity-60 dark:text-green-400"
+                >
+                  {isPreviewing
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Eye className="h-3.5 w-3.5" />}
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs font-medium text-green-700 hover:underline dark:text-green-400"
+                >
+                  Replace
+                </button>
+              </div>
             </div>
           ) : (
             <button
@@ -568,6 +655,10 @@ export default function CandidateProfile() {
           </button>
         </div>
       </form>
+
+      {cvPreviewUrl && (
+        <CvPreviewModal url={cvPreviewUrl} onClose={closeCvPreview} />
+      )}
     </div>
   )
 }

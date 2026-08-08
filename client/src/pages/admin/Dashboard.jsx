@@ -1,7 +1,7 @@
-// client/src/pages/admin/AdminDashboard.jsx
+// client/src/pages/admin/Dashboard.jsx
 
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import {
   Users,
@@ -11,6 +11,8 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertCircle,
+  XCircle,
+  Loader2,
 } from 'lucide-react'
 import {
   BarChart,
@@ -27,9 +29,17 @@ import {
 } from 'recharts'
 
 import { getAdminStats, getAllUsers } from '../../api/adminApi'
-import { fetchHealth, fetchHealthDb } from '../../api/healthApi'
+import { fetchAllServiceHealth, aggregateSystemHealth } from '../../api/healthApi'
 
-// ── Stat Card (Horizontal Dashboard Style) ──────────────────────
+const CHECKING = { status: 'checking', note: 'Checking…' }
+
+const INITIAL_SERVICES = {
+  api: CHECKING,
+  db: CHECKING,
+  storage: CHECKING,
+}
+
+// ── Stat Card (centered) ────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, sub, color = 'brand' }) {
   const colors = {
     brand:  'bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400',
@@ -39,40 +49,89 @@ function StatCard({ icon: Icon, label, value, sub, color = 'brand' }) {
     red:    'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400',
   }
   return (
-    <div className="flex items-center gap-4 rounded-xl bg-slate-50 px-4 py-4 dark:bg-slate-800/50">
+    <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-5 text-center dark:bg-slate-800/50">
       <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${colors[color]}`}>
         <Icon className="h-5 w-5" strokeWidth={1.75} />
       </div>
-      <div>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
-        <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-        {sub && <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
-      </div>
+      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+      {sub && <p className="text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
     </div>
   )
+}
+
+const STATUS_BADGE = {
+  healthy: 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400 ring-1 ring-green-200/40 dark:ring-green-800/40',
+  degraded: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 ring-1 ring-amber-200/40 dark:ring-amber-800/40',
+  unavailable: 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 ring-1 ring-red-200/40 dark:ring-red-800/40',
+  checking: 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300 ring-1 ring-slate-200/40 dark:ring-slate-700/40',
+}
+
+const STATUS_LABEL = {
+  healthy: 'Healthy',
+  degraded: 'Degraded',
+  unavailable: 'Unavailable',
+  checking: 'Checking',
+}
+
+function StatusIcon({ status }) {
+  if (status === 'healthy') {
+    return <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+  }
+  if (status === 'degraded') {
+    return <AlertCircle className="h-4 w-4 shrink-0 text-amber-500" />
+  }
+  if (status === 'checking') {
+    return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-400" />
+  }
+  return <XCircle className="h-4 w-4 shrink-0 text-red-500" />
+}
+
+function statusDotClass(status) {
+  if (status === 'healthy') return 'bg-green-500'
+  if (status === 'degraded') return 'bg-amber-500'
+  if (status === 'checking') return 'bg-slate-400'
+  return 'bg-red-500'
 }
 
 export default function AdminDashboard() {
   const { user } = useAuth()
   const [adminStats, setAdminStats] = useState(null)
   const [users, setUsers] = useState([])
-  const [health, setHealth] = useState({ api: 'checking', db: 'checking' })
+  const [services, setServices] = useState(INITIAL_SERVICES)
   const [isLoading, setIsLoading] = useState(true)
 
+  const refreshHealth = useCallback(async () => {
+    const next = await fetchAllServiceHealth()
+    setServices(next)
+  }, [])
+
   useEffect(() => {
-    Promise.all([
-      getAdminStats(),
-      getAllUsers(),
-      fetchHealth().then(() => 'operational').catch(() => 'error'),
-      fetchHealthDb().then(() => 'operational').catch(() => 'error'),
-    ])
-      .then(([statsData, usersData, apiStatus, dbStatus]) => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        const [statsData, usersData] = await Promise.all([
+          getAdminStats(),
+          getAllUsers(),
+        ])
+        if (cancelled) return
         setAdminStats(statsData)
         setUsers(usersData)
-        setHealth({ api: apiStatus, db: dbStatus })
-      })
-      .finally(() => setIsLoading(false))
-  }, [])
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    load()
+    refreshHealth()
+
+    const intervalId = setInterval(refreshHealth, 30_000)
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
+  }, [refreshHealth])
 
   if (isLoading) {
     return (
@@ -80,12 +139,6 @@ export default function AdminDashboard() {
         <ArrowRight className="h-8 w-8 animate-spin text-brand-600" />
       </div>
     )
-  }
-
-  // System status configuration using your dashboard's standard badge styling
-  const statusBadgeStyles = {
-    operational: 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400 ring-1 ring-green-200/40 dark:ring-green-800/40',
-    warning: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 ring-1 ring-amber-200/40 dark:ring-amber-800/40',
   }
 
   const safeUsers = users ?? []
@@ -103,21 +156,31 @@ export default function AdminDashboard() {
     },
     {
       name: 'Admins',
-      value: Math.max((adminStats?.total_users ?? 0) - (adminStats?.total_candidates ?? 0) - (adminStats?.total_recruiters ?? 0), 0),
+      value: Math.max(
+        (adminStats?.total_users ?? 0) -
+          (adminStats?.total_candidates ?? 0) -
+          (adminStats?.total_recruiters ?? 0),
+        0
+      ),
       color: '#ef4444',
     },
-  ].filter(entry => entry.value > 0)
+  ].filter((entry) => entry.value > 0)
 
   const now = new Date()
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const date = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
     const month = date.toLocaleString('default', { month: 'short' })
-    const count = safeUsers.filter((user) => {
-      const joined = new Date(user.created_at)
-      return joined.getMonth() === date.getMonth() && joined.getFullYear() === date.getFullYear()
+    const count = safeUsers.filter((u) => {
+      const joined = new Date(u.created_at)
+      return (
+        joined.getMonth() === date.getMonth() &&
+        joined.getFullYear() === date.getFullYear()
+      )
     }).length
     return { month, users: count }
   })
+
+  const overall = aggregateSystemHealth(services)
 
   const stats = [
     {
@@ -126,13 +189,6 @@ export default function AdminDashboard() {
       value: adminStats?.total_users ?? '—',
       sub: `${adminStats?.total_candidates ?? 0} candidates, ${adminStats?.total_recruiters ?? 0} recruiters`,
       color: 'brand',
-    },
-    {
-      icon: Brain,
-      label: 'Model Status',
-      value: 'Not trained',
-      sub: 'No model deployed yet',
-      color: 'purple',
     },
     {
       icon: BarChart3,
@@ -144,32 +200,27 @@ export default function AdminDashboard() {
     {
       icon: ShieldCheck,
       label: 'System Health',
-      value: 'Good',
-      sub: 'All services running',
-      color: 'amber',
+      value: overall.value,
+      sub: overall.sub,
+      color: overall.color,
     },
   ]
 
   const systemStatus = [
     {
       label: 'FastAPI Backend',
-      status: health.api,
-      note: health.api === 'operational' ? 'Responding to /health' : 'Health check failed',
+      status: services.api.status,
+      note: services.api.note,
     },
     {
       label: 'PostgreSQL Database',
-      status: health.db,
-      note: health.db === 'operational' ? 'Connected via asyncpg' : 'Database unreachable',
-    },
-    {
-      label: 'ML Model',
-      status: adminStats?.model_trained ? 'operational' : 'warning',
-      note: adminStats?.model_trained ? 'Model deployed' : 'Not yet trained',
+      status: services.db.status,
+      note: services.db.note,
     },
     {
       label: 'MinIO Storage',
-      status: 'pending',
-      note: 'Resume storage (not health-checked)',
+      status: services.storage.status,
+      note: services.storage.note,
     },
   ]
 
@@ -195,10 +246,10 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
 
-      {/* Welcome Banner - Changed to standard brand colors, not warning red */}
+      {/* Welcome Banner */}
       <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-800 dark:bg-slate-900">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          Admin Panel — {user?.full_name} 
+          Admin Panel — {user?.full_name}
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400 ring-1 ring-red-200/40 dark:ring-red-800/40">
             <ShieldCheck className="h-3 w-3" />
             Admin
@@ -209,15 +260,16 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Dashboard Metrics - Horizontal grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s) => <StatCard key={s.label} {...s} />)}
+      {/* Dashboard Metrics — 3 centered cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((s) => (
+          <StatCard key={s.label} {...s} />
+        ))}
       </div>
 
       {/* Analytics Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
 
-        {/* Monthly registrations */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Monthly Registrations</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">New users over the last 6 months</p>
@@ -248,7 +300,6 @@ export default function AdminDashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Role distribution */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">User Role Distribution</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Breakdown of registered users by role</p>
@@ -282,7 +333,7 @@ export default function AdminDashboard() {
                 <Legend
                   iconType="circle"
                   iconSize={8}
-                  formatter={value => (
+                  formatter={(value) => (
                     <span style={{ fontSize: '12px', color: '#64748b' }}>{value}</span>
                   )}
                 />
@@ -295,32 +346,33 @@ export default function AdminDashboard() {
       {/* Bottom Section */}
       <div className="grid gap-6 lg:grid-cols-2">
 
-        {/* System Status */}
+        {/* System Status — live */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">System Status</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Live service health</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Live service health · refreshes every 30s</p>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {systemStatus.map((s, i) => {
-              const isOperational = s.status === 'operational'
-              return (
-                <div key={i} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    {isOperational
-                      ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                      : <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                    }
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{s.label}</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">{s.note}</p>
-                    </div>
+            {systemStatus.map((s) => (
+              <div
+                key={s.label}
+                className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0"
+              >
+                <div className="flex items-center gap-3">
+                  <StatusIcon status={s.status} />
+                  <div>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {s.label}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{s.note}</p>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeStyles[s.status]}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${isOperational ? 'bg-green-500' : 'bg-amber-500'}`} />
-                    {isOperational ? 'Online' : 'Warning'}
-                  </span>
                 </div>
-              )
-            })}
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[s.status]}`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${statusDotClass(s.status)}`} />
+                  {STATUS_LABEL[s.status]}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 

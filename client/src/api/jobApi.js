@@ -102,8 +102,17 @@ export const getMyApplicationsWithJobs = async () => {
 }
 
 
-// for admin to trigger scoring for all applicants of a specific job
+// Recruiter: score / rank all applicants for a job
 export const scoreJobApplicants = async (jobId) => {
   const response = await axiosInstance.post(`/ranking/score/job/${jobId}`)
+  return response.data
+}
+
+// Recruiter: fetch applicant resume via authenticated API proxy (blob)
+export const getApplicantResumeBlob = async (jobId, applicationId) => {
+  const response = await axiosInstance.get(
+    `/ranking/job/${jobId}/applicant/${applicationId}/resume`,
+    { responseType: 'blob' },
+  )
   return response.data
 }

@@ -21,6 +21,14 @@ export const uploadResume = async (file) => {
   return response.data
 }
 
+/** Fetch own resume as a blob for in-app PDF preview (authenticated proxy). */
+export const getMyResumeBlob = async () => {
+  const response = await axiosInstance.get('/candidate/resume', {
+    responseType: 'blob',
+  })
+  return response.data
+}
+
 
 
 export const getProfileCompletion = async () => {

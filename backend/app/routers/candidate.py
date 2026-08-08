@@ -65,6 +65,33 @@ async def upload_resume(
     )
 
 
+@router.get("/resume")
+async def get_my_resume(
+    current_user: User = Depends(require_candidate),
+):
+    """Stream the current candidate's resume from MinIO (authenticated)."""
+    from fastapi.responses import Response
+    from app.utils.minio_client import get_resume_bytes
+
+    object_name = current_user.resume_url
+    if not object_name:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    try:
+        data, content_type = await get_resume_bytes(object_name)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Resume not found") from None
+
+    return Response(
+        content=data,
+        media_type=content_type or "application/pdf",
+        headers={
+            "Content-Disposition": 'inline; filename="resume.pdf"',
+            "Cache-Control": "private, max-age=300",
+        },
+    )
+
+
 @router.get("/profile/completion", response_model=ProfileCompletionResponse)
 async def get_completion(
     current_user: User = Depends(require_candidate),

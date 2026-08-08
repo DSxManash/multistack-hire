@@ -5,25 +5,30 @@ import { fadeUp } from './motion'
 
 const faqs = [
   {
-    question: "How is the GitHub suitability score calculated?",
-    answer: "Our pipeline pulls public repository stats, commit frequencies, code language diversity, and contribution histories. These signals are parsed and normalized relative to engineering roles to yield a robust, commit-by-commit assessment."
+    question: 'How is the GitHub suitability signal calculated?',
+    answer:
+      'We request public GitHub profile data using the candidate’s username (no private credentials). Scoring uses followers, public repository count, language diversity across owned repos, and account age in days.',
   },
   {
-    question: "How does LeetCode grading factor in difficulty levels?",
-    answer: "We query public LeetCode APIs to retrieve counts of Solved Problems across Easy, Medium, and Hard tiers, alongside their community reputation score. Higher difficulty solutions carry weighted logits in our predictive model."
+    question: 'How does LeetCode factor into the score?',
+    answer:
+      'We fetch public LeetCode stats for the candidate’s username and use the counts of easy, medium, and hard problems solved as model features. Other profile fields may be stored for display but are not part of the 12-feature scoring vector.',
   },
   {
-    question: "How does the Resume NLP parser map keyword matching?",
-    answer: "Our backend runs CV text content through specialized NLP filters. It identifies skill entities, years of experience, and graduation terms, then maps them against target job descriptions for automated alignment."
+    question: 'What does the resume parser extract?',
+    answer:
+      'Uploaded PDF resumes are stored in MinIO, then processed with NLP to count skills, projects, internships, certifications, and CGPA. The resulting score is profile-based; it is not matched against individual job descriptions.',
   },
   {
-    question: "Why was XGBoost chosen as the core ranking model?",
-    answer: "Gradient boosting trees are exceptionally effective at capturing non-linear interactions between disparate features (such as high LeetCode scores offsetting short CV histories, or vice versa) without losing calibration."
+    question: 'How does the XGBoost model produce a ranking score?',
+    answer:
+      'A trained gradient-boosting model receives the 12-feature vector and predicts a suitability score between 0 and 100. If the model file cannot be loaded, the system falls back to a simple rule-based blend of GitHub, LeetCode, and CV signals.',
   },
   {
-    question: "How is developer profile data secured?",
-    answer: "We only retrieve public data using public username handles (never asking for private credentials). Uploaded resume PDFs are stored securely within local sandboxed S3 buckets (MinIO) and are encrypted at rest."
-  }
+    question: 'How is developer profile data secured?',
+    answer:
+      'We only use public usernames for GitHub and LeetCode—never private API tokens. Resume PDFs are uploaded by candidates and stored in MinIO object storage, with access mediated through authenticated application endpoints.',
+  },
 ]
 
 export default function FAQ() {

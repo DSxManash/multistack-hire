@@ -4,7 +4,9 @@ from app.core.dependencies import get_db
 from app.core.security import get_current_user
 from app.models.user import User, UserRole
 from app.schemas.auth import UserResponse, UpdateUserRoleRequest
+from app.schemas.candidate import ProfileResponse
 from app.repositories.user_repo import UserRepository
+from app.services.candidate_service import CandidateService
 from fastapi import HTTPException, status
 
 router = APIRouter()
@@ -39,7 +41,7 @@ async def search_candidates(
     return await repo.get_all_candidates(search=search)
 
 
-@router.get("/candidates/{user_id}", response_model=UserResponse)
+@router.get("/candidates/{user_id}", response_model=ProfileResponse)
 async def get_candidate(
     user_id: str,
     db: AsyncSession = Depends(get_db),
@@ -47,12 +49,13 @@ async def get_candidate(
         require_role([UserRole.recruiter, UserRole.admin])
     ),
 ):
-    """Get a single candidate profile by ID."""
+    """Get a single candidate profile by ID (full profile for recruiters)."""
     repo = UserRepository(db)
     user = await repo.get_by_id(user_id)
     if not user or user.role != UserRole.candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
-    return user
+    service = CandidateService(db)
+    return await service.get_profile(user)
 
 
 @router.get("/", response_model=list[UserResponse])

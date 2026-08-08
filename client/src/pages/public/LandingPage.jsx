@@ -3,7 +3,6 @@ import Hero from '../../components/landing/Hero'
 import Stats from '../../components/landing/Stats'
 import Features from '../../components/landing/Features'
 import Workflow from '../../components/landing/Workflow'
-import MLSection from '../../components/landing/MLSection'
 import Testimonials from '../../components/landing/Testimonials'
 import FAQ from '../../components/landing/FAQ'
 import CTA from '../../components/landing/CTA'
@@ -21,7 +20,6 @@ export default function LandingPage() {
         <Stats />
         <Features />
         <Workflow />
-        <MLSection />
         <Testimonials />
         <FAQ />
         <CTA />

@@ -32,10 +32,13 @@ class JobRepository:
         return list(result.scalars().all())
 
     async def get_by_recruiter(self, recruiter_id: str) -> list[Job]:
-        """Return all jobs posted by a recruiter."""
+        """Return active jobs posted by a recruiter (soft-deleted jobs excluded)."""
         result = await self.db.execute(
             select(Job)
-            .where(Job.recruiter_id == recruiter_id)
+            .where(
+                Job.recruiter_id == recruiter_id,
+                Job.is_active == True,
+            )
             .order_by(Job.created_at.desc())
         )
         return list(result.scalars().all())

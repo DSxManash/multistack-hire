@@ -1,16 +1,18 @@
 import { NavLink } from 'react-router-dom'
 import { Layers, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { getRoleDashboard } from '../../lib/roleHome'
 
 export default function Sidebar({ navItems, isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile }) {
   const { user } = useAuth()
+  const homePath = getRoleDashboard(user?.role)
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
       {/* Logo + toggle */}
       <div className={`flex h-16 shrink-0 items-center border-b border-slate-200 dark:border-slate-800 ${isCollapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>
         {!isCollapsed ? (
-          <NavLink to="/" className="flex items-center gap-2">
+          <NavLink to={homePath} className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white shadow-md">
               <Layers className="h-4 w-4" strokeWidth={2} />
             </span>
@@ -19,7 +21,7 @@ export default function Sidebar({ navItems, isCollapsed, isMobileOpen, onToggleC
             </span>
           </NavLink>
         ) : (
-          <NavLink to="/" className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white shadow-md">
+          <NavLink to={homePath} className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white shadow-md">
             <Layers className="h-4 w-4" strokeWidth={2} />
           </NavLink>
         )}
