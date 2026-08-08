@@ -1,6 +1,7 @@
 # backend/app/services/ranking_service.py
 
 import json
+import logging
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -12,6 +13,8 @@ from app.services.leetcode_service import (
 )
 from app.services.resume_parser import parse_resume
 from app.services.scoring_service import calculate_score
+
+logger = logging.getLogger(__name__)
 
 
 async def score_candidate(user: User, db: AsyncSession) -> dict:
@@ -58,6 +61,11 @@ async def score_candidate(user: User, db: AsyncSession) -> dict:
             cv_features = cv_result.get("features", cv_features)
             cv_details = cv_result.get("_details", {})
         except Exception as e:
+            logger.exception(
+                "[cv] parse_resume failed user_id=%s object=%s",
+                user.id,
+                user.resume_url,
+            )
             errors.append(f"CV Parser: {str(e)}")
     else:
         errors.append("Resume not uploaded")

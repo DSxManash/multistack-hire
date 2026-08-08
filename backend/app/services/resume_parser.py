@@ -1,22 +1,14 @@
 # backend/app/services/resume_parser.py
 
-import io
+import logging
 import os
 import asyncio
 import tempfile
 from functools import partial
-from app.utils.minio_client import _get_client
-from app.core.config import settings
 
+from app.utils.minio_client import _get_object_bytes_sync
 
-def _download_from_minio(object_name: str) -> bytes:
-    """Download PDF bytes from MinIO synchronously."""
-    client = _get_client()
-    response = client.get_object(
-        bucket_name=settings.MINIO_BUCKET_NAME,
-        object_name=object_name,
-    )
-    return response.read()
+logger = logging.getLogger(__name__)
 
 
 def _run_cv_pipeline(pdf_bytes: bytes) -> dict:
@@ -43,19 +35,35 @@ async def parse_resume(object_name: str) -> dict:
     """
     Async entry point — downloads from MinIO and runs CV pipeline.
     Returns dict with features + details.
+    Expects a MinIO object key (e.g. resumes/...), not a local path.
     """
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
-    # Download from MinIO (sync → thread pool)
-    pdf_bytes = await loop.run_in_executor(
+    logger.info("[cv] downloading resume object=%s", object_name)
+    pdf_bytes, _content_type = await loop.run_in_executor(
         None,
-        partial(_download_from_minio, object_name)
+        partial(_get_object_bytes_sync, object_name),
+    )
+    logger.info(
+        "[cv] downloaded resume object=%s bytes=%s; starting NLP pipeline",
+        object_name,
+        len(pdf_bytes),
     )
 
-    # Run CV pipeline (sync → thread pool)
     result = await loop.run_in_executor(
         None,
-        partial(_run_cv_pipeline, pdf_bytes)
+        partial(_run_cv_pipeline, pdf_bytes),
     )
-
+    features = (result or {}).get("features") or {}
+    logger.info(
+        "[cv] pipeline complete object=%s features=%s",
+        object_name,
+        {k: features.get(k) for k in (
+            "cv_skills",
+            "cv_projects",
+            "cv_internships",
+            "cv_certifications",
+            "cv_cgpa",
+        )},
+    )
     return result

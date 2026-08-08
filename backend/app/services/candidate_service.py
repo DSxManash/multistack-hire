@@ -1,7 +1,7 @@
 import json
+import logging
 from datetime import datetime
 
-from app.models.user import User
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +13,8 @@ from app.schemas.candidate import (
     ChangePasswordRequest,
 )
 from app.utils.minio_client import upload_resume, get_resume_url
+
+logger = logging.getLogger(__name__)
 
 
 # ── Helper functions for username extraction ──
@@ -125,10 +127,37 @@ class CandidateService:
                 detail="Only PDF files are accepted",
             )
 
-        object_name = await upload_resume(
-            file_bytes=file_bytes,
-            filename=filename,
-            content_type="application/pdf",
+        logger.info(
+            "[cv] upload start user_id=%s filename=%s bytes=%s",
+            user.id,
+            filename,
+            len(file_bytes),
+        )
+
+        try:
+            object_name = await upload_resume(
+                file_bytes=file_bytes,
+                filename=filename,
+                content_type="application/pdf",
+            )
+        except Exception as exc:
+            logger.exception(
+                "[cv] upload failed user_id=%s filename=%s",
+                user.id,
+                filename,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "Resume storage is temporarily unavailable. "
+                    "Please try again shortly."
+                ),
+            ) from exc
+
+        logger.info(
+            "[cv] upload stored user_id=%s object=%s",
+            user.id,
+            object_name,
         )
 
         user.resume_url = object_name
