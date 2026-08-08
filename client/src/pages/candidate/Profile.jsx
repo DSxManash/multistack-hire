@@ -1,0 +1,573 @@
+// client/src/pages/candidate/Profile.jsx
+
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import {
+  getProfile, updateProfile, uploadResume, getProfileCompletion
+} from '../../api/candidateApi'
+import * as Icons from 'lucide-react'
+
+const {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  GitBranch,
+  Linkedin,
+  Code2,
+  Briefcase,
+  Plus,
+  X,
+  Upload,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ExternalLink,
+  Save,
+  ShieldAlert
+} = Icons
+
+function normalizeGithubUsername(value) {
+  if (!value) return ''
+  const trimmed = value.trim()
+  if (trimmed.includes('github.com/')) {
+    return trimmed.replace(/.*github\.com\//, '').replace(/\/+$/, '')
+  }
+  return trimmed.replace(/^@/, '')
+}
+
+function normalizeLeetcodeUsername(value) {
+  if (!value) return ''
+  const trimmed = value.trim()
+  if (trimmed.includes('leetcode.com')) {
+    const cleaned = trimmed.replace(/.*leetcode\.com\//, '').replace(/\/+$/, '')
+    return cleaned.startsWith('u/') ? cleaned.slice(2) : cleaned
+  }
+  return trimmed
+}
+
+// ── Profile Completion Bar ─────────────────────────────────────
+function CompletionBar({ percentage, missing }) {
+  const steps = ['Personal', 'Social', 'Skills', 'Resume']
+  const completedSteps = Math.floor(percentage / 25) // 0-4
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+          Profile Completion
+        </h3>
+        <span className={`text-sm font-bold ${
+          percentage === 100 ? 'text-green-600' : percentage >= 60 ? 'text-brand-600' : 'text-amber-600'
+        }`}>
+          {percentage}%
+        </span>
+      </div>
+      {/* Step indicators */}
+      <div className="flex items-center gap-1 mb-4">
+        {steps.map((label, idx) => {
+          const isComplete = idx < completedSteps
+          const isCurrent = idx === completedSteps && percentage < 100
+          return (
+            <div key={label} className="flex-1 flex items-center gap-1">
+              <div className={`flex-1 h-1.5 rounded-full transition-colors ${
+                isComplete ? 'bg-green-500' : isCurrent ? 'bg-brand-500' : 'bg-slate-200 dark:bg-slate-700'
+              }`} />
+              <span className={`text-[10px] font-medium whitespace-nowrap ${
+                isComplete ? 'text-green-600' : isCurrent ? 'text-brand-600' : 'text-slate-400'
+              }`}>
+                {label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      {missing.length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Missing fields:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {missing.map(field => (
+              <span key={field} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+                {field}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {percentage === 100 && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Profile complete — you can apply to jobs
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ── Skills Input ───────────────────────────────────────────────
+function SkillsInput({ skills, onChange }) {
+  const [input, setInput] = useState('')
+
+  function addSkill(e) {
+    if ((e.key === 'Enter' || e.key === ',') && input.trim()) {
+      e.preventDefault()
+      const newSkill = input.trim().replace(/,$/, '')
+      if (!skills.includes(newSkill)) {
+        onChange([...skills, newSkill])
+      }
+      setInput('')
+    }
+  }
+
+  function removeSkill(skill) {
+    onChange(skills.filter(s => s !== skill))
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {skills.map(skill => (
+          <span
+            key={skill}
+            className="flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-400"
+          >
+            {skill}
+            <button
+              type="button"
+              onClick={() => removeSkill(skill)}
+              className="hover:text-red-500"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <input
+        type="text"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={addSkill}
+        placeholder="Type a skill and press Enter (e.g. React, Python)"
+        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
+      />
+      <p className="mt-1 text-xs text-slate-400">Press Enter or comma to add a skill</p>
+    </div>
+  )
+}
+
+// ── Input Field ────────────────────────────────────────────────
+function InputField({ label, icon: Icon, required, ...props }) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        {Icon && (
+          <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        )}
+        <input
+          {...props}
+          className={`w-full rounded-lg border border-slate-200 bg-white py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500 ${Icon ? 'pl-10 pr-4' : 'px-4'}`}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── Main Profile Page ──────────────────────────────────────────
+export default function CandidateProfile() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const fileInputRef = useRef(null)
+
+  const [profile, setProfile] = useState(null)
+  const [completion, setCompletion] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [successMsg, setSuccessMsg] = useState(null)
+  const [error, setError] = useState(null)
+
+  const fromApply = location.state?.fromApply ?? false
+  const applyMissing = location.state?.missing ?? []
+
+  const [form, setForm] = useState({
+    phone_number: '',
+    location: '',
+    bio: '',
+    years_of_experience: '',
+    github_username: '',
+    leetcode_username: '',
+    linkedin_url: '',
+  })
+  const [skills, setSkills] = useState([])
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [profileData, completionData] = await Promise.all([
+          getProfile(),
+          getProfileCompletion(),
+        ])
+        setProfile(profileData)
+        setCompletion(completionData)
+        setForm({
+          phone_number: profileData.phone_number ?? '',
+          location: profileData.location ?? '',
+          bio: profileData.bio ?? '',
+          years_of_experience: profileData.years_of_experience ?? '',
+          github_username: profileData.github_username ?? '',
+          leetcode_username: profileData.leetcode_username ?? '',
+          linkedin_url: profileData.linkedin_url ?? '',
+        })
+        setSkills(profileData.skills ?? [])
+      } catch {
+        setError('Failed to load profile')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  function handleChange(e) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  async function handleSave(e) {
+    e.preventDefault()
+    setIsSaving(true)
+    setError(null)
+    setSuccessMsg(null)
+    try {
+      const updated = await updateProfile({
+        ...form,
+        years_of_experience: form.years_of_experience
+          ? parseInt(form.years_of_experience)
+          : null,
+        skills,
+      })
+      setProfile(updated)
+      const completionData = await getProfileCompletion()
+      setCompletion(completionData)
+      setSuccessMsg('Profile saved successfully!')
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to save profile')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleResumeUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploading(true)
+    setError(null)
+    try {
+      const updated = await uploadResume(file)
+      setProfile(updated)
+      const completionData = await getProfileCompletion()
+      setCompletion(completionData)
+      setSuccessMsg('Resume uploaded successfully!')
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to upload resume')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Success Toast Snackbar - fixed bottom right */}
+      {successMsg && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg bg-green-600 px-5 py-3 text-white shadow-xl animate-slideUp">
+          {successMsg}
+        </div>
+      )}
+
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Profile</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Manage your personal information and resume
+        </p>
+      </div>
+
+      {/* Completion Bar */}
+      {completion && (
+        <CompletionBar
+          percentage={completion.percentage}
+          missing={completion.missing}
+        />
+      )}
+
+      {/* From Apply Warning */}
+      {fromApply && (
+        <div className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 dark:border-brand-900 dark:bg-brand-950/30">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-brand-800 dark:text-brand-300">
+              Complete your profile to apply for jobs
+            </p>
+            <p className="mt-0.5 text-xs text-brand-700 dark:text-brand-400">
+              Please fill in the following fields: {applyMissing.join(', ')}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400 animate-slideDown">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* Two-column layout for Personal and Social */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Personal Information */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <User className="h-4 w-4 text-brand-600" />
+              Personal Information
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Full Name
+                </label>
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900">
+                  <User className="h-4 w-4 text-slate-400" />
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {user?.full_name}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Email
+                </label>
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900">
+                  <Mail className="h-4 w-4 text-slate-400" />
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {user?.email}
+                  </span>
+                </div>
+              </div>
+              <InputField
+                label="Phone Number"
+                icon={Phone}
+                name="phone_number"
+                value={form.phone_number}
+                onChange={handleChange}
+                placeholder="+977 98XXXXXXXX"
+              />
+              <InputField
+                label="Location"
+                icon={MapPin}
+                name="location"
+                value={form.location}
+                onChange={handleChange}
+                placeholder="Kathmandu, Nepal"
+              />
+              <InputField
+                label="Years of Experience"
+                icon={Briefcase}
+                name="years_of_experience"
+                type="number"
+                min="0"
+                max="50"
+                value={form.years_of_experience}
+                onChange={handleChange}
+                placeholder="e.g. 3"
+              />
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={form.bio}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Brief description about yourself..."
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Social Links */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+              <Code2 className="h-4 w-4 text-brand-600" />
+              Social Links
+              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-400">
+                Required for ML scoring
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              These are used by the AI ranking engine to evaluate your technical profile.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <InputField
+                  label="GitHub Username"
+                  icon={GitBranch}
+                  name="github_username"
+                  value={form.github_username}
+                  onChange={handleChange}
+                  placeholder="e.g. octocat"
+                  required
+                />
+                {form.github_username && (
+                  <a
+                    href={'https://github.com/' + normalizeGithubUsername(form.github_username)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 flex items-center gap-1 text-xs text-brand-600 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    View GitHub profile
+                  </a>
+                )}
+              </div>
+              <div>
+                <InputField
+                  label="LeetCode Username"
+                  icon={Code2}
+                  name="leetcode_username"
+                  value={form.leetcode_username}
+                  onChange={handleChange}
+                  placeholder="e.g. 1234567/username"
+                  required
+                />
+                {form.leetcode_username && (
+                  <a
+                    href={'https://leetcode.com/' + normalizeLeetcodeUsername(form.leetcode_username)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 flex items-center gap-1 text-xs text-brand-600 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    View LeetCode profile
+                  </a>
+                )}
+              </div>
+              <InputField
+                label="LinkedIn URL"
+                icon={Linkedin}
+                name="linkedin_url"
+                value={form.linkedin_url}
+                onChange={handleChange}
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Skills - full width */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Plus className="h-4 w-4 text-brand-600" />
+            Skills
+          </h3>
+          <SkillsInput skills={skills} onChange={setSkills} />
+        </div>
+
+        {/* Resume - full width */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-brand-600" />
+            Resume / CV
+            {!profile?.resume_url && (
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-950 dark:text-red-400">
+                Required
+              </span>
+            )}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            PDF only, maximum 5MB. Used for AI-powered resume parsing.
+          </p>
+
+          {profile?.resume_url ? (
+            <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                    Resume uploaded
+                  </p>
+                  {profile.resume_uploaded_at && (
+                    <p className="text-xs text-green-600 dark:text-green-500">
+                      Last updated {new Date(profile.resume_uploaded_at).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric'
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs font-medium text-green-700 hover:underline dark:text-green-400"
+              >
+                Replace
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 py-10 text-sm font-medium text-slate-500 transition-all hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50/50 disabled:opacity-60 dark:border-slate-700 dark:hover:border-brand-700 dark:hover:text-brand-400 dark:hover:bg-brand-950/20"
+            >
+              {isUploading
+                ? <><Loader2 className="h-5 w-5 animate-spin" /> Uploading...</>
+                : <><Upload className="h-5 w-5" /> Click to upload PDF resume</>
+              }
+            </button>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            onChange={handleResumeUpload}
+            className="hidden"
+          />
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-8 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md hover:from-brand-700 hover:to-brand-600 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isSaving
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
+              : <><Save className="h-4 w-4" /> Save Profile</>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

@@ -1,0 +1,83 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
+    env:
+      # Repository Variables (Settings → Secrets and variables → Actions → Variables)
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      # Relative asset paths for custom domain (/) and github.io project sites.
+      VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || './' }}
+      # Empty for custom-domain root hosting; set /multistack-hire for github.io project site.
+      VITE_ROUTER_BASENAME: ${{ vars.VITE_ROUTER_BASENAME || '' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Require VITE_API_URL
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "::error::VITE_API_URL repository variable is not set."
+            echo "Add it under Settings → Secrets and variables → Actions → Variables"
+            echo "Example: https://multistack-hire.onrender.com"
+            exit 1
+          fi
+          echo "Building against API: $VITE_API_URL"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Prepare GitHub Pages output
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+
+      - name: Verify build asset paths
+        run: |
+          grep -q 'src="./assets/' dist/index.html || grep -q 'src="/assets/' dist/index.html
+          test -f dist/assets/*.js
+          test -f dist/assets/*.css
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

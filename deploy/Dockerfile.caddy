@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+# Build from repository root:
+#   docker build -f deploy/Dockerfile.caddy .
+
+# ── Build React (Vite) ──────────────────────────────────────────
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+COPY client/package.json client/package-lock.json* ./
+RUN npm ci
+
+COPY client/ ./
+
+# Same-origin API via Caddy: browser calls /api → reverse_proxy backend
+ARG VITE_API_URL=/api
+ARG VITE_BASE_PATH=/
+ARG VITE_ROUTER_BASENAME=
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_BASE_PATH=$VITE_BASE_PATH \
+    VITE_ROUTER_BASENAME=$VITE_ROUTER_BASENAME
+
+RUN npm run build
+
+# ── Caddy serves SPA + terminates TLS + proxies API/storage ─────
+FROM caddy:2.9-alpine
+
+COPY --from=build /app/dist /srv
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+
+EXPOSE 80 443
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
