@@ -1,5 +1,5 @@
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from app.models.job import JobType, ApplicationStatus
 
@@ -15,6 +15,13 @@ class JobCreate(BaseModel):
     company_name: str
     # THIS FIELD so the recruiter can send it from the frontend
     application_deadline: datetime | None = None 
+
+    @field_validator("application_deadline", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v 
 
 class JobResponse(BaseModel):
     id: str

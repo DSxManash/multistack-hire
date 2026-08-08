@@ -112,6 +112,7 @@ export default function AppRoutes() {
             <Route path="/candidate/ranking" element={<Ranking />} />
             <Route path="/candidate/settings" element={<Settings />} />
             <Route path="/candidate/applications" element={<CandidateApplications />} />
+            <Route path="/candidate/resume" element={<Navigate to="/candidate/profile" replace />} />
           </Route>
         </Route>
 

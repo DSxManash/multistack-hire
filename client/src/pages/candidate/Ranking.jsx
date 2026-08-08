@@ -274,38 +274,13 @@ export default function CandidateRanking() {
         </div>
       </div>
 
-      {/* Breakdown – using full width with side‑by‑side bars */}
-      {shap && (
-        // <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
-        //   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Score Breakdown</h3>
-        //   <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        //     <FactorBar
-        //       label="GitHub Activity"
-        //       icon={Github}
-        //       value={shap.github}
-        //       color="text-slate-700 dark:text-slate-300"
-        //       description="Followers, repos, language diversity, account age"
-        //     />
-        //     <FactorBar
-        //       label="LeetCode Performance"
-        //       icon={Code2}
-        //       value={shap.leetcode}
-        //       color="text-amber-600 dark:text-amber-400"
-        //       description="Easy, medium, hard problems solved"
-        //     />
-        //     <FactorBar
-        //       label="Resume / CV"
-        //       icon={FileText}
-        //       value={shap.cv}
-        //       color="text-brand-600 dark:text-brand-400"
-        //       description="Skills, projects, internships, certifications, CGPA"
-        //     />
-        //   </div>
-        // </div>
+
+
+      {/* Profile Summary Header */}
+      {scoreData && (scoreData.github_data || scoreData.leetcode_data || scoreData.cv_features) && (
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Your Profile Summary</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your Profile Summary</h2>
         </div>
-        
       )}
 
       {/* Summaries – grid with 2 or 3 columns */}
@@ -317,10 +292,10 @@ export default function CandidateRanking() {
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Public Repos', value: scoreData.github_data.public_repos },
+                { label: 'Public Repos', value: scoreData.github_data.github_public_repos ?? scoreData.github_data.public_repos },
                 { label: 'Total Stars', value: scoreData.github_data.total_stars },
-                { label: 'Followers', value: scoreData.github_data.followers },
-                { label: 'Languages', value: scoreData.github_data.language_count },
+                { label: 'Followers', value: scoreData.github_data.github_followers ?? scoreData.github_data.followers },
+                { label: 'Languages', value: scoreData.github_data.github_language_diversity ?? scoreData.github_data.language_count ?? (scoreData.github_data.languages ? Object.keys(scoreData.github_data.languages).length : null) },
               ].map(s => (
                 <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
                   <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>
@@ -338,10 +313,10 @@ export default function CandidateRanking() {
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Total Solved', value: scoreData.leetcode_data.total_solved },
-                { label: 'Easy', value: scoreData.leetcode_data.easy_solved },
-                { label: 'Medium', value: scoreData.leetcode_data.medium_solved },
-                { label: 'Hard', value: scoreData.leetcode_data.hard_solved },
+                { label: 'Total Solved', value: scoreData.leetcode_data.total_solved ?? ((scoreData.leetcode_data.leetcode_easy_solved || 0) + (scoreData.leetcode_data.leetcode_medium_solved || 0) + (scoreData.leetcode_data.leetcode_hard_solved || 0)) },
+                { label: 'Easy', value: scoreData.leetcode_data.leetcode_easy_solved ?? scoreData.leetcode_data.easy_solved },
+                { label: 'Medium', value: scoreData.leetcode_data.leetcode_medium_solved ?? scoreData.leetcode_data.medium_solved },
+                { label: 'Hard', value: scoreData.leetcode_data.leetcode_hard_solved ?? scoreData.leetcode_data.hard_solved },
               ].map(s => (
                 <div key={s.label} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
                   <p className="text-lg font-bold text-slate-900 dark:text-white">{s.value ?? '—'}</p>

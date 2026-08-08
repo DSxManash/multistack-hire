@@ -12,7 +12,6 @@ import {
 const pageTitles = {
   '/candidate/dashboard':  'Dashboard',
   '/candidate/profile':    'My Profile',
-  '/candidate/resume':     'Resume Upload',
   '/candidate/ranking':    'My Ranking',
   '/candidate/settings':   'Settings',
   '/candidate/jobs':       'Browse Jobs',
